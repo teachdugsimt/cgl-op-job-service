@@ -223,3 +223,25 @@ export const updateJobSchema: FastifySchema = {
     }
   }
 }
+
+export const deleteJobSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+    require: ['authorization']
+  },
+  params: {
+    jobId: { type: 'string' }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+      },
+      additionalProperties: true
+    }
+  }
+}
+

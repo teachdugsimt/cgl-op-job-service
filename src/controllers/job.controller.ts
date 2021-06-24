@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { Controller, GET, getInstanceByToken, PATCH, POST } from 'fastify-decorators';
+import { Controller, DELETE, GET, getInstanceByToken, PATCH, POST } from 'fastify-decorators';
 import JobService from '../services/job.service';
-import { createJobSchema, filterSchema, getJobDetail, updateJobSchema } from './job.schema';
+import { createJobSchema, deleteJobSchema, filterSchema, getJobDetail, updateJobSchema } from './job.schema';
 
 @Controller({ route: '/api/v1/jobs' })
 export default class JobController {
@@ -74,6 +74,23 @@ export default class JobController {
       const data = req.body;
       const token = req.headers.authorization
       return await this.jobService.updateDetail(jobId, data, token);
+    } catch (err) {
+      console.log('err :>> ', err);
+      throw err;
+    }
+  }
+
+  @DELETE({
+    url: '/:jobId',
+    options: {
+      schema: deleteJobSchema
+    }
+  })
+  async delete(req: FastifyRequest<{ Headers: { authorization: string }, Params: { jobId: string } }>, reply: FastifyReply): Promise<object> {
+    try {
+      const jobId = req.params.jobId;
+      const token = req.headers.authorization
+      return await this.jobService.deactivateJob(jobId, token);
     } catch (err) {
       console.log('err :>> ', err);
       throw err;

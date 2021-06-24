@@ -18,6 +18,7 @@ import { ViewEntity, ViewColumn, ObjectIdColumn } from "typeorm";
 	j.offered_total AS price,
 	j.price_type AS price_type,
 	j.tipper AS tipper,
+	j.is_deleted AS is_deleted,
 	JSON_BUILD_OBJECT('id', usr.id, 'fullName', usr.fullname, 'email', usr.email, 'mobileNo', usr.phone_number, 'avatar', JSON_BUILD_OBJECT('object', usr.avatar)) AS owner,
 	JSON_AGG(JSON_BUILD_OBJECT('name', s.address_dest, 'dateTime', s.delivery_datetime, 'contactName', s.fullname_dest, 'contactMobileNo', s.phone_dest, 'lat', s.latitude_dest::VARCHAR, 'lng', s.longitude_dest::VARCHAR)) AS shipments
 FROM
@@ -28,7 +29,7 @@ FROM
 		email text,
 		fullname text,
 		phone_number text,
-		avatar text) ON usr.id = j.uesr_id
+		avatar text) ON usr.id = j.user_id
 GROUP BY j.id,
 	j.product_type_id,
 	j.product_name,
@@ -45,6 +46,7 @@ GROUP BY j.id,
 	j.offered_total,
 	j.price_type,
 	j.tipper,
+	j.is_deleted,
 	usr.id,
 	usr.email,
 	usr.fullname,
@@ -101,6 +103,9 @@ export class VwJobList {
 
   @ViewColumn({ name: 'tipper' })
   tipper!: boolean
+
+  @ViewColumn({ name: 'is_deleted' })
+  isDeleted!: boolean
 
   @ViewColumn({ name: 'owner' })
   owner!: {

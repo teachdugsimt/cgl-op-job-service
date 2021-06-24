@@ -40,6 +40,7 @@ export interface JobUpdateEntity {
   loadingContactPhone?: string
   loadingLatitude?: number
   loadingLongitude?: number
+  isDeleted?: boolean
 }
 
 export interface JobFindEntity {
@@ -72,4 +73,9 @@ export interface ShipmentCreateEntity {
   longitudeDest: number
   createdUser?: string
   updatedUser?: string
+}
+
+export interface ShipmentUpdateEntity {
+  updatedUser?: string
+  isDeleted?: boolean
 }

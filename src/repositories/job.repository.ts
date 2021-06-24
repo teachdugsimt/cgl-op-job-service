@@ -45,4 +45,10 @@ export default class JobRepository {
       .execute();
   }
 
+  async delete(options: Partial<Job>): Promise<any> {
+    const server: any = this.instance
+    const jobRepository: Repository<Job> = server?.db?.jobs;
+    return jobRepository.delete(options);
+  }
+
 }

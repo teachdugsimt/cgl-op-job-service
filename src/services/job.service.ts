@@ -140,6 +140,7 @@ export default class JobService {
       ...filterTruckAmount,
       ...(truckType ? { truckType: In(JSON.parse(truckType)) } : undefined),
       ...(status ? { status } : undefined),
+      isDeleted: false // Remove this attribute when user is admin
     }
 
     let numbOfPage: number;
@@ -380,6 +381,18 @@ export default class JobService {
     return jobUpdated;
   }
 
+  async deactivateJob(jobId: string, token: string): Promise<any> {
+    const decodeJobId: number = utility.decodeUserId(jobId);
+    const userIdFromToken = utility.getUserIdByToken(token);
+    const decodeUserId: number = utility.decodeUserId(userIdFromToken);
+
+    const params = { isDeleted: true, updatedUser: decodeUserId.toString() }
+    await jobRepository.update(decodeJobId, params);
+    await shipmentRepository.updateByJobId(decodeJobId, params)
+
+    return true;
+  }
+
   @Destructor()
   async destroy(): Promise<void> { }
 }
@@ -387,61 +400,37 @@ export default class JobService {
 /*
 
 {
-  "truckType": "9",
-  "truckAmount": 1,
-  "productTypeId": "13",
-  "productName": "ไม้มะขาม",
-  "weight": 4.5,
-  "price": 1200,
-  "tipper": false,
-  "priceType": "PER_TRIP",
-  "expiredTime": "28-06-2021 11:12:33",
-  "note": "nothing",
-  "from": {
-    "name": "52 ม.4 ตำบล หาดทนง อำเภอเมืองอุทัยธานี อุทัยธานี 61000 ประเทศไทย",
-    "dateTime": "29-06-2021 11:12:33",
-    "contactName": "Mate",
-    "contactMobileNo": "0899911111",
-    "lat": "15.879204778165716",
-    "lng": "99.76684855297208"
-  },
+  "note": "Hello world !!",
   "to": [
     {
-      "name": "91/3 ทรงพลซอย 9 ตำบลลำพยา อำเภอเมืองนครปฐม นครปฐม 73000 ประเทศไทย",
-      "dateTime": "30-06-2021 09:12:33",
+      "name": "ถนนเขาทุเรียน-เขาน้อย ตำบล เขาพระ อำเภอเมืองนครนายก นครนายก 26000 ประเทศไทย",
+      "dateTime": "01-06-2021 09:12:33",
       "contactName": "Fun",
       "contactMobileNo": "0900011111",
-      "lat": "13.809871203571731",
-      "lng": "100.03820026293397"
+      "lat": "14.240156708205872",
+      "lng": "101.2658803537488"
+    },
+    {
+      "name": "เกาะลอย อำเภอศรีราชา ชลบุรี ประเทศไทย",
+      "dateTime": "03-07-2021 16:12:33",
+      "contactName": "Um",
+      "contactMobileNo": "0988880000",
+      "lat": "13.173935",
+      "lng": "100.9203128"
+    },
+    {
+      "name": "22/1 หมู่ 1, ตำบลไม้งาม อำเภอเมืองตาก จังหวัดตาก, 63000 ตำบล ไม้งาม อำเภอเมืองตาก ตาก 63000 ประเทศไทย",
+      "dateTime": "06-07-2021 13:09:10",
+      "contactName": "Tum",
+      "contactMobileNo": "0877777777",
+      "lat": "16.910912068420917",
+      "lng": "99.12378491833806"
     }
   ]
 }
 
+4ZM80EZ0
+
+eyJraWQiOiJKRGJId2JWdlRFZ3M5dVJ4RVY2Y0NBM2dkTW1nU0xKOERhNGxUZmpBaXA4PSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJkYjk4ZDNiMC01NTQwLTQxYjUtYWQwMi0zZjBlYWNiMGU1N2MiLCJyb2xlcyI6IkFkbWlufERyaXZlciIsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC5hcC1zb3V0aGVhc3QtMS5hbWF6b25hd3MuY29tXC9hcC1zb3V0aGVhc3QtMV9oSVdCU1l6N3oiLCJjb2duaXRvOnVzZXJuYW1lIjoiZGI5OGQzYjAtNTU0MC00MWI1LWFkMDItM2YwZWFjYjBlNTdjIiwidXNlcklkIjoiRVpRV0cwWjEiLCJjdXN0b206dXNlcklkIjoiRVpRV0cwWjEiLCJvcmlnaW5fanRpIjoiNjU3YjA0YTQtOWFkYS00MGZmLThmYTctMWM1ZDUxYTU5ZDM0IiwiYXVkIjoiNHFrZDE0dTZuYTBmbzF0Zmh0cmRhcmk0MWkiLCJldmVudF9pZCI6ImJjODE3MTdhLTBhMjQtNGJhMC1hMzliLWZhOGVlMjczMzkwNyIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNjI0NDcwNDQzLCJleHAiOjE2MjQ0NzQwNDMsImlhdCI6MTYyNDQ3MDQ0MywianRpIjoiOTM4M2NjMTQtZjI5My00OTRkLTliOTQtM2YwOTYyMjVkMWU3In0.iqFKygQQPXzDk1Yz0ZAwhp0V5eGM5GYqPmIHgP3gQHQpGw88rWO_2CmelPlK6_u0HX43lrMVwP-DB8mEOR-IV2WzgueP0xUl-d4dGtExCpyZd_fsiJjOUzpaR02_5MetN6qe0h6xb4ax78APMVBXDcx3Ep-QbxTeQM4xny6iuCgA8MrsZ8QRbvOdX7wZR5WDwtHKYA4ppA06hryGA0UzG6hAcG46_VGJcEjaV_It51R6vzAfohz367-vBtmUqLAcePeKGDIscAEKvgQXOlXi3_NT7KI9TW3zJc-5FxNt1XrC2rR-hTF91qQhtILZLYipb843AvxMKtP1j98cZXN8fQ
+
 */
-// {
-// "truckType": "8",
-// "truckAmount": 3,
-// "productTypeId": "12",
-// "productName": "ไม้สัก",
-// "price": 250,
-// "priceType": "PER_TON",
-// "note": "Hello world",
-// "to": [
-//   {
-//     "name": "ถนนเขาทุเรียน-เขาน้อย ตำบล เขาพระ อำเภอเมืองนครนายก นครนายก 26000 ประเทศไทย",
-//     "dateTime": "01-06-2021 09:12:33",
-//     "contactName": "Fun",
-//     "contactMobileNo": "0900011111",
-//     "lat": "14.240156708205872",
-//     "lng": "101.2658803537488"
-//   },
-//   {
-//     "name": "เกาะลอย อำเภอศรีราชา ชลบุรี ประเทศไทย",
-//     "dateTime": "03-07-2021 16:12:33",
-//     "contactName": "Um",
-//     "contactMobileNo": "0988880000",
-//     "lat": "13.173935",
-//     "lng": "100.9203128"
-//   }
-// ]
-// }
