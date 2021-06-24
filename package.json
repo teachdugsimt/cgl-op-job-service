@@ -21,8 +21,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/lodash": "^4.14.170",
     "aws-lambda-fastify": "^1.4.4",
     "claudia-api-builder": "^4.1.2",
+    "date-and-time": "^1.0.1",
     "fastify": "^3.15.0",
     "fastify-autoload": "^3.7.1",
     "fastify-blipp": "^3.0.0",
@@ -32,12 +34,14 @@
     "pg": "^8.6.0",
     "pino-pretty": "^4.7.1",
     "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.2.32"
+    "typeorm": "^0.2.32",
+    "utility-layer": "git+https://git-codecommit.ap-southeast-1.amazonaws.com/v1/repos/utility-layer#master"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
     "@types/cors": "^2.8.10",
+    "@types/date-and-time": "^0.13.0",
     "@types/jest": "^26.0.23",
     "@types/node": "^15.0.1",
     "husky": "^6.0.0",
