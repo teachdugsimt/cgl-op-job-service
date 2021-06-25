@@ -1,6 +1,7 @@
 import { ViewEntity, ViewColumn, ObjectIdColumn } from "typeorm";
 
 @ViewEntity({
+  name: 'vw_job_list',
   expression!: `SELECT
 	j.id AS id,
 	j.product_type_id AS product_type_id,

@@ -79,3 +79,13 @@ export interface ShipmentUpdateEntity {
   updatedUser?: string
   isDeleted?: boolean
 }
+
+export interface FavoriteCreateEntity {
+  userId: number
+  jobId: number
+  createdAt?: Date
+  updatedAt?: Date
+  createdUser?: string
+  updatedUser?: string
+  isDeleted?: boolean
+}

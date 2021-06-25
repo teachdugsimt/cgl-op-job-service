@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import fp from 'fastify-plugin';
 import { createConnection } from 'typeorm';
-import { Item, Job, Shipment, VwJobList } from '../models';
+import { Favorite, Item, Job, Shipment, VwFavoriteJob, VwJobList } from '../models';
 
 export default fp(async server => {
   try {
@@ -13,6 +13,8 @@ export default fp(async server => {
       jobs: connection.getRepository(Job),
       shipments: connection.getRepository(Shipment),
       vwJobList: connection.getRepository(VwJobList),
+      favorite: connection.getRepository(Favorite),
+      vwFavoriteJob: connection.getRepository(VwFavoriteJob),
     });
   } catch (error) {
     console.log(error);

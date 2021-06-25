@@ -245,3 +245,60 @@ export const deleteJobSchema: FastifySchema = {
   }
 }
 
+export const getFavoriteJobSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+    require: ['authorization']
+  },
+  querystring: {
+    type: 'object',
+    properties: {
+      descending: { type: 'boolean' },
+      page: { type: 'number' },
+      rowsPerPage: { type: 'number' },
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+      },
+      additionalProperties: true
+    }
+  }
+}
+
+
+export const addFavoriteJobSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+    require: ['authorization']
+  },
+  body: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' }
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+      },
+      additionalProperties: true
+    },
+    // 204: {
+    //   type: 'object',
+    //   properties: {
+    //   },
+    //   additionalProperties: true
+    // }
+  },
+}
+
