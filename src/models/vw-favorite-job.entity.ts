@@ -4,7 +4,6 @@ import { VwJobList } from "./vw-job-list.entity";
 @ViewEntity({
   name: 'vw_favorite_job',
   expression!: `SELECT
-    f.user_id AS user_id,
     vw.*,
     f.updated_at AS created_at
   FROM

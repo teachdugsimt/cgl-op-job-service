@@ -1,6 +1,12 @@
 import { FastifySchema } from 'fastify';
 
 export const filterSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+  },
   querystring: {
     type: 'object',
     properties: {
@@ -39,7 +45,7 @@ export const filterSchema: FastifySchema = {
   }
 }
 
-export const getJobDetail: FastifySchema = {
+export const getJobDetailSchema: FastifySchema = {
   params: {
     jobId: { type: 'string' }
   },
@@ -302,3 +308,35 @@ export const addFavoriteJobSchema: FastifySchema = {
   },
 }
 
+export const myJobSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+    require: ['authorization']
+  },
+  querystring: {
+    type: 'object',
+    properties: {
+      descending: { type: 'boolean' },
+      page: { type: 'number' },
+      rowsPerPage: { type: 'number' },
+      sortBy: { type: 'string' },
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: { type: 'array' },
+        size: { type: 'number' },
+        currentPage: { type: 'number' },
+        totalPages: { type: 'number' },
+        totalElements: { type: 'number' },
+        numberOfElements: { type: 'number' },
+      },
+      additionalProperties: false
+    }
+  }
+}

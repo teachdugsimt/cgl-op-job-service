@@ -1,9 +1,10 @@
-import { ViewEntity, ViewColumn, ObjectIdColumn } from "typeorm";
+import { ViewEntity, ViewColumn, ObjectIdColumn, AfterLoad } from "typeorm";
 
 @ViewEntity({
   name: 'vw_job_list',
   expression!: `SELECT
 	j.id AS id,
+	j.user_id AS user_id,
 	j.product_type_id AS product_type_id,
 	j.product_name AS product_name,
 	j.truck_type AS truck_type,
@@ -32,6 +33,7 @@ FROM
 		phone_number text,
 		avatar text) ON usr.id = j.user_id
 GROUP BY j.id,
+	j.user_id,
 	j.product_type_id,
 	j.product_name,
 	j.truck_type,
@@ -59,6 +61,9 @@ export class VwJobList {
 
   @ObjectIdColumn({ name: 'id' })
   id!: number
+
+  @ViewColumn({ name: 'user_id' })
+  userId?: number
 
   @ViewColumn({ name: 'product_type_id' })
   productTypeId!: number
@@ -128,5 +133,10 @@ export class VwJobList {
     lat: string,
     lng: string,
   }>
+
+  @AfterLoad()
+  removeUserId() {
+    delete this.userId
+  }
 
 }

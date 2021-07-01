@@ -25,6 +25,7 @@ interface JobFindEntity {
   truckType?: string
   type?: number
   weight?: number
+  isDeleted?: boolean
 }
 
 interface AddJobEntity {
@@ -66,6 +67,8 @@ interface ShipmentDestination {
   latitudeDest: string
   longitudeDest: string
 }
+
+type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'status' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted'>
 
 enum JobStatus {
   ACTIVE = 1
@@ -109,6 +112,7 @@ export default class JobService {
       truckType,
       type,
       weight,
+      isDeleted = false
     } = filter
 
     let filterTotalWeight: any = {}
@@ -140,7 +144,7 @@ export default class JobService {
       ...filterTruckAmount,
       ...(truckType ? { truckType: In(JSON.parse(truckType)) } : undefined),
       ...(status ? { status } : undefined),
-      isDeleted: false // Remove this attribute when user is admin
+      isDeleted: isDeleted // Remove this attribute when user is admin
     }
 
     let numbOfPage: number;
@@ -177,7 +181,7 @@ export default class JobService {
         requiredTruckAmount: job.truckAmount,
         from: {
           name: job.loadingAddress,
-          dateTime: date.isValid(job.loadingDatetime) ? date.format(new Date(job.loadingDatetime), this.dateFormat) : null,
+          dateTime: job.loadingDatetime && date.isValid(job.loadingDatetime) ? date.format(new Date(job.loadingDatetime), this.dateFormat) : null,
           contactName: job.loadingContactName,
           contactMobileNo: job.loadingContactPhone,
           lat: job.loadingLatitude.toString(),
@@ -185,7 +189,7 @@ export default class JobService {
         },
         to: job.shipments?.map((shipment: any) => ({
           ...shipment,
-          dateTime: date.format(new Date(shipment.dateTime), this.dateFormat)
+          dateTime: shipment.dateTime && date.format(new Date(shipment.dateTime), this.dateFormat)
         })),
         owner: {
           ...job.owner,
@@ -391,6 +395,78 @@ export default class JobService {
     await shipmentRepository.updateByJobId(decodeJobId, params)
 
     return true;
+  }
+
+  async getMyJob(userId: string, filter: FindMyJobEntity): Promise<any> {
+    let {
+      descending,
+      page,
+      rowsPerPage,
+      sortBy = 'id',
+    } = filter
+
+    const decodeUserId = utility.decodeUserId(userId);
+
+    let numbOfPage: number;
+    let numbOfLimit: number;
+    if (rowsPerPage) {
+      numbOfLimit = +rowsPerPage;
+    } else {
+      numbOfLimit = 10;
+    }
+    if (page) {
+      numbOfPage = +page === 1 ? 0 : (+page - 1) * numbOfLimit;
+    } else {
+      numbOfPage = 0;
+    }
+
+    const options: FindManyOptions = {
+      where: { userId: decodeUserId },
+      take: numbOfLimit,
+      skip: numbOfPage,
+      order: {
+        [sortBy]: descending ? 'DESC' : 'ASC'
+      },
+    }
+
+    const jobs = await viewJobRepositry.findAndCount(options)
+
+    const jobMapping = jobs[0]?.map((job: any) => {
+      return {
+        id: utility.encodeUserId(job.id),
+        productTypeId: job.productTypeId,
+        productName: job.productName,
+        truckType: job.truckType,
+        weight: Math.round(job.weight * 100) / 100,
+        requiredTruckAmount: job.truckAmount,
+        from: {
+          name: job.loadingAddress,
+          dateTime: date.isValid(job.loadingDatetime) ? date.format(new Date(job.loadingDatetime), this.dateFormat) : null,
+          contactName: job.loadingContactName,
+          contactMobileNo: job.loadingContactPhone,
+          lat: job.loadingLatitude.toString(),
+          lng: job.loadingLongitude.toString(),
+        },
+        to: job.shipments?.map((shipment: any) => ({
+          ...shipment,
+          dateTime: date.format(new Date(shipment.dateTime), this.dateFormat)
+        })),
+        owner: {
+          ...job.owner,
+          userId: utility.encodeUserId(job.owner.id)
+        },
+        status: job.status,
+        quotations: [],
+        price: Math.round(job.price * 100) / 100,
+        priceType: job.priceType,
+        tipper: job.tipper
+      }
+    })
+
+    return {
+      data: jobMapping || [],
+      count: jobs[1] || 0,
+    }
   }
 
   @Destructor()
