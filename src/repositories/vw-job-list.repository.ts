@@ -31,12 +31,12 @@ export default class VwJobListRepository {
     const viewJobList: Repository<VwJobList> = server?.db?.vwJobList;
     return viewJobList.createQueryBuilder()
       .select()
-      .where('full_text_search @@ plainto_tsquery(:query)', {
+      .where('full_text_search @@ to_tsquery(:query)', {
         query: data.fullTextSearch
       })
       .orderBy({
         ...(data?.sortBy ? { [data.sortBy]: data.descending } : undefined),
-        ['ts_rank(full_text_search, plainto_tsquery(:query))']: 'DESC'
+        ['ts_rank(full_text_search, to_tsquery(:query))']: 'DESC'
       })
       .take(data.rowsPerPage)
       .skip(data.page)
