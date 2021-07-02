@@ -26,6 +26,7 @@ interface JobFindEntity {
   type?: number
   weight?: number
   isDeleted?: boolean
+  textSearch?: string
 }
 
 interface AddJobEntity {
@@ -56,6 +57,7 @@ interface AddJobEntity {
     lng: string
   }[],
   platform?: number
+  userId?: string
 }
 
 interface ShipmentDestination {
@@ -68,7 +70,7 @@ interface ShipmentDestination {
   longitudeDest: string
 }
 
-type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'status' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted'>
+type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'status' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted' | 'textSearch'>
 
 enum JobStatus {
   ACTIVE = 1
@@ -83,6 +85,8 @@ const jobRepository = new JobRepository();
 const viewJobRepositry = new VwJobListRepository();
 const shipmentRepository = new ShipmentRepository();
 const utility = new Utility();
+
+const camelToSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
 @Service()
 export default class JobService {
@@ -112,40 +116,15 @@ export default class JobService {
       truckType,
       type,
       weight,
-      isDeleted = false
+      isDeleted = false,
+      textSearch
     } = filter
 
+    let jobs: any
     let filterTotalWeight: any = {}
     let filterTruckAmount: any = {}
-
-    if (maxWeight && minWeight) {
-      filterTotalWeight.totalWeight = Between(minWeight, maxWeight);
-    } else if (maxWeight) {
-      filterTotalWeight.totalWeight = Between(0, maxWeight);
-    } else if (minWeight) {
-      filterTotalWeight.totalWeight = Between(minWeight, 999999);
-    }
-
-    if (truckAmountMax && truckAmountMin) {
-      filterTruckAmount.truckAmount = Between(truckAmountMin, truckAmountMax);
-    } else if (truckAmountMax) {
-      filterTruckAmount.truckAmount = Between(0, truckAmountMax);
-    } else if (truckAmountMin) {
-      filterTruckAmount.truckAmount = Between(truckAmountMin, 999999);
-    }
-
-    const cond = {
-      ...(from ? { loadingAddress: ILike(`%${from}%`) } : undefined),
-      // ...(to ? {}),
-      ...filterTotalWeight,
-      // ...(owner ? {}),
-      ...(productName ? { productName } : undefined),
-      ...(productType ? { productTypeId: In(JSON.parse(productType)) } : undefined),
-      ...filterTruckAmount,
-      ...(truckType ? { truckType: In(JSON.parse(truckType)) } : undefined),
-      ...(status ? { status } : undefined),
-      isDeleted: isDeleted // Remove this attribute when user is admin
-    }
+    let conditionForMobileSearch: any = {}
+    let conditionForFullTextSearch: any = []
 
     let numbOfPage: number;
     let numbOfLimit: number;
@@ -160,16 +139,56 @@ export default class JobService {
       numbOfPage = 0;
     }
 
-    const options: FindManyOptions = {
-      where: cond,
-      take: numbOfLimit,
-      skip: numbOfPage,
-      order: {
-        [sortBy]: descending ? 'DESC' : 'ASC'
-      },
-    }
+    if (textSearch) {
+      const options = {
+        fullTextSearch: textSearch,
+        page: numbOfPage,
+        rowsPerPage: numbOfLimit,
+        ...(sortBy ? { sortBy: camelToSnakeCase(sortBy) } : undefined),
+        ...(descending ? { descending: descending ? 'DESC' : 'ASC' } : undefined),
+      }
+      jobs = await viewJobRepositry.fullTextSearch(options);
+    } else {
+      if (maxWeight && minWeight) {
+        filterTotalWeight.totalWeight = Between(minWeight, maxWeight);
+      } else if (maxWeight) {
+        filterTotalWeight.totalWeight = Between(0, maxWeight);
+      } else if (minWeight) {
+        filterTotalWeight.totalWeight = Between(minWeight, 999999);
+      }
 
-    const jobs = await viewJobRepositry.findAndCount(options)
+      if (truckAmountMax && truckAmountMin) {
+        filterTruckAmount.truckAmount = Between(truckAmountMin, truckAmountMax);
+      } else if (truckAmountMax) {
+        filterTruckAmount.truckAmount = Between(0, truckAmountMax);
+      } else if (truckAmountMin) {
+        filterTruckAmount.truckAmount = Between(truckAmountMin, 999999);
+      }
+
+      conditionForMobileSearch = {
+        ...(from ? { loadingAddress: ILike(`%${from}%`) } : undefined),
+        // ...(to ? {}),
+        ...filterTotalWeight,
+        // ...(owner ? {}),
+        ...(productName ? { productName } : undefined),
+        ...(productType ? { productTypeId: In(JSON.parse(productType)) } : undefined),
+        ...filterTruckAmount,
+        ...(truckType ? { truckType: In(JSON.parse(truckType)) } : undefined),
+        ...(status ? { status } : undefined),
+        isDeleted: isDeleted // Remove this attribute when user is admin
+      }
+
+      const options: FindManyOptions = {
+        where: textSearch ? conditionForFullTextSearch : conditionForMobileSearch,
+        take: numbOfLimit,
+        skip: numbOfPage,
+        order: {
+          [sortBy]: descending ? 'DESC' : 'ASC'
+        },
+      }
+
+      jobs = await viewJobRepositry.findAndCount(options)
+    }
 
     const jobMapping = jobs[0]?.map((job: any) => {
       return {
@@ -244,16 +263,17 @@ export default class JobService {
     }
   }
 
-  async addJob(data: AddJobEntity, token: string): Promise<any> {
-    const userId = utility.getUserIdByToken(token);
+  async addJob(data: AddJobEntity, userId: string): Promise<any> {
     const decodeUserId = utility.decodeUserId(userId);
+    const userIdFromMember = data?.userId ? utility.decodeUserId(data.userId) : null;
+    let destinationData: string = '';
 
     const jobParams = {
       status: JobStatus.ACTIVE,
       offeredTotal: data.price,
       createdUser: decodeUserId,
       updatedUser: decodeUserId,
-      userId: decodeUserId,
+      userId: userIdFromMember ?? decodeUserId,
       truckType: data.truckType,
       truckAmount: data.truckAmount,
       productTypeId: +data.productTypeId,
@@ -271,26 +291,43 @@ export default class JobService {
       loadingContactPhone: data.from.contactMobileNo,
       loadingLatitude: +data.from.lat,
       loadingLongitude: +data.from.lng,
-      platform: data.platform ?? Platform.MOBILE
+      platform: data.platform ?? Platform.MOBILE,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
 
     const jobResult = await jobRepository.add(jobParams);
 
-    const shipmentParams = data.to.map((shipment: any) => ({
-      jobId: jobResult.id,
-      status: JobStatus.ACTIVE,
-      addressDest: shipment.name,
-      // deliveryDatetime: shipment.dateTime,
-      deliveryDatetime: new Date(date.parse(shipment.dateTime, this.dateFormatWithMs)),
-      fullnameDest: shipment.contactName,
-      phoneDest: shipment.contactMobileNo,
-      latitudeDest: +shipment.lat,
-      longitudeDest: +shipment.lng,
-      createdUser: decodeUserId,
-      updatedUser: decodeUserId,
-    }))
+    const shipmentParams = data.to.map((shipment: any) => {
+      destinationData += `${shipment.name} ${shipment.contactName} ${shipment.contactMobileNo} `;
+      return {
+        jobId: jobResult.id,
+        status: JobStatus.ACTIVE,
+        addressDest: shipment.name,
+        // deliveryDatetime: shipment.dateTime,
+        deliveryDatetime: new Date(date.parse(shipment.dateTime, this.dateFormatWithMs)),
+        fullnameDest: shipment.contactName,
+        phoneDest: shipment.contactMobileNo,
+        latitudeDest: +shipment.lat,
+        longitudeDest: +shipment.lng,
+        createdUser: decodeUserId,
+        updatedUser: decodeUserId,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    const loadingData = `${jobParams.loadingAddress} ${jobParams.loadingContactName} ${jobParams.loadingContactPhone}`;
 
     await shipmentRepository.bulkInsert(shipmentParams);
+    const ownerData = await viewJobRepositry.findById(jobResult.id, { select: ['owner'] });
+
+    await jobRepository.addFullTextSearch(jobResult.id, [
+      jobParams.productName,
+      ownerData?.owner?.fullName ?? '',
+      loadingData,
+      destinationData
+    ]);
 
     return jobResult;
   }

@@ -51,4 +51,20 @@ export default class JobRepository {
     return jobRepository.delete(options);
   }
 
+  async addFullTextSearch(id: number, texts: Array<string>): Promise<any> {
+    const server: any = this.instance
+    const jobRepository: Repository<Job> = server?.db?.jobs;
+    return jobRepository.query(
+      `UPDATE job
+      SET full_text_search = (
+        setweight(to_tsvector('english', COALESCE($2, '')), 'A')
+        || setweight(to_tsvector('english', COALESCE($3, '')), 'B')
+        || setweight(to_tsvector('english', COALESCE($4, '')), 'C')
+        || setweight(to_tsvector('english', COALESCE($5, '')), 'D')
+      )
+      WHERE id = $1`,
+      [id, ...texts]
+    )
+  }
+
 }

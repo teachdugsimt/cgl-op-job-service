@@ -22,7 +22,8 @@ import { ViewEntity, ViewColumn, ObjectIdColumn, AfterLoad } from "typeorm";
 	j.tipper AS tipper,
 	j.is_deleted AS is_deleted,
 	JSON_BUILD_OBJECT('id', usr.id, 'fullName', usr.fullname, 'email', usr.email, 'mobileNo', usr.phone_number, 'avatar', JSON_BUILD_OBJECT('object', usr.avatar)) AS owner,
-	JSON_AGG(JSON_BUILD_OBJECT('name', s.address_dest, 'dateTime', s.delivery_datetime, 'contactName', s.fullname_dest, 'contactMobileNo', s.phone_dest, 'lat', s.latitude_dest::VARCHAR, 'lng', s.longitude_dest::VARCHAR)) AS shipments
+	JSON_AGG(JSON_BUILD_OBJECT('name', s.address_dest, 'dateTime', s.delivery_datetime, 'contactName', s.fullname_dest, 'contactMobileNo', s.phone_dest, 'lat', s.latitude_dest::VARCHAR, 'lng', s.longitude_dest::VARCHAR)) AS shipments,
+	j.full_text_search AS full_text_search
 FROM
 	job j
 	LEFT JOIN shipment s ON s.job_id = j.id
@@ -50,6 +51,7 @@ GROUP BY j.id,
 	j.price_type,
 	j.tipper,
 	j.is_deleted,
+	j.full_text_search,
 	usr.id,
 	usr.email,
 	usr.fullname,
@@ -134,9 +136,17 @@ export class VwJobList {
     lng: string,
   }>
 
+  @ViewColumn({ name: 'full_text_search' })
+  fullTextSearch?: string
+
   @AfterLoad()
   removeUserId() {
     delete this.userId
+  }
+
+  @AfterLoad()
+  removeFullTextSearch() {
+    delete this.fullTextSearch
   }
 
 }

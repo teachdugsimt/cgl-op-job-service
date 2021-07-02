@@ -26,7 +26,8 @@ export const filterSchema: FastifySchema = {
       truckAmountMin: { type: 'number' },
       truckType: { type: 'string' },
       type: { type: 'number' },
-      weight: { type: 'number' }
+      weight: { type: 'number' },
+      textSearch: { type: 'string' }
     }
   },
   response: {
@@ -156,8 +157,10 @@ export const createJobSchema: FastifySchema = {
           }
         }
       },
+      platform: { type: 'number' },
+      userId: { type: 'string' }
     },
-    require: ['truckType', 'truckAmount', 'productTypeId', 'productName', 'weight', 'price', 'tipper', 'priceType', 'expiredTime', 'from', 'to']
+    require: ['truckType', 'productTypeId', 'productName', 'price', 'tipper', 'priceType', 'expiredTime', 'from', 'to']
   },
   response: {
     200: {

@@ -18,6 +18,7 @@ export default class JobService {
   async init(): Promise<void> { }
 
   async getFavoriteJob(userId: string, desc: boolean, page: number, rowsPerPage: number): Promise<any> {
+    console.log('userId :>> ', userId);
     let numbOfPage: number;
     let numbOfLimit: number;
     if (rowsPerPage) {

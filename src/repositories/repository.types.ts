@@ -89,3 +89,11 @@ export interface FavoriteCreateEntity {
   updatedUser?: string
   isDeleted?: boolean
 }
+
+export interface JobFullTextSearch {
+  fullTextSearch?: string
+  page?: number
+  rowsPerPage?: number
+  sortBy?: string,
+  descending?: string
+}
