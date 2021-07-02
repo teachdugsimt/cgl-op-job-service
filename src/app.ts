@@ -12,7 +12,8 @@ function build(opts: object = configApp) {
   const app = fastify(opts)
   app.register(fastifyBlipp)
   app.register(require('fastify-swagger'), configSwagger)
-  app.register(require('fastify-cors'), { 
+  app.register(require('fastify-cors'), {
+    exposedHeaders: "Content-Disposition",
     origin: (origin, cb) => {
       // if(/localhost/.test(origin)){
       //   //  Request from localhost will pass
