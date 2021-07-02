@@ -141,7 +141,7 @@ export default class JobService {
 
     if (textSearch) {
       const options = {
-        fullTextSearch: textSearch,
+        fullTextSearch: `${textSearch}:*`,
         page: numbOfPage,
         rowsPerPage: numbOfLimit,
         ...(sortBy ? { sortBy: camelToSnakeCase(sortBy) } : undefined),
