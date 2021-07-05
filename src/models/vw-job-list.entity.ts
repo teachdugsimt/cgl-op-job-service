@@ -71,7 +71,7 @@ export class VwJobList {
   productTypeId!: number
 
   @ViewColumn({ name: 'product_name' })
-  productName!: number
+  productName!: string
 
   @ViewColumn({ name: 'truck_type' })
   truckType!: number
@@ -83,31 +83,31 @@ export class VwJobList {
   requiredTruckAmount!: number
 
   @ViewColumn({ name: 'loading_address' })
-  loadingAddress!: number
+  loadingAddress!: string
 
   @ViewColumn({ name: 'loading_datetime' })
   loadingDatetime!: Date
 
   @ViewColumn({ name: 'loading_contact_name' })
-  loadingContactName!: number
+  loadingContactName!: string
 
   @ViewColumn({ name: 'loading_contact_phone' })
-  loadingContactPhone!: number
+  loadingContactPhone!: string
 
   @ViewColumn({ name: 'loading_latitude' })
-  loadingLatitude!: number
+  loadingLatitude!: string
 
   @ViewColumn({ name: 'loading_longitude' })
-  loadingLongitude!: number
+  loadingLongitude!: string
 
   @ViewColumn({ name: 'status' })
-  status!: number
+  status!: boolean
 
   @ViewColumn({ name: 'price' })
   price!: number
 
   @ViewColumn({ name: 'price_type' })
-  priceType!: number
+  priceType!: string
 
   @ViewColumn({ name: 'tipper' })
   tipper!: boolean
