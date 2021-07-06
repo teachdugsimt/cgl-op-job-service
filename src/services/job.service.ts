@@ -99,7 +99,7 @@ export default class JobService {
 
   async getAllJob(filter: JobFindEntity): Promise<any> {
     let {
-      descending,
+      descending = true,
       from,
       maxWeight,
       minWeight,
