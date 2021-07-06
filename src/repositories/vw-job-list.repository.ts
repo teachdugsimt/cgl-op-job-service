@@ -26,6 +26,37 @@ export default class VwJobListRepository {
     return viewJobList.findAndCount(filter);
   }
 
+  async findAndCountV2(filter: FindManyOptions): Promise<any> {
+    const {
+      address,
+      totalWeight,
+      productName,
+      productTypeId,
+      truckType,
+      status,
+      truckAmount,
+      isDeleted
+    }: any = filter.where
+    const orderBy: any = filter.order
+
+    const server: any = this.instance
+    const viewJobList: Repository<VwJobList> = server?.db?.vwJobList;
+    const vwJobListQueryBuilder = viewJobList.createQueryBuilder();
+    vwJobListQueryBuilder.where('is_deleted = :isDeleted', { isDeleted });
+    if (address) vwJobListQueryBuilder.andWhere(`to_tsvector('simple', loading_address || shipments) @@ :address::tsquery`, { address: `${address}:*` })
+    if (totalWeight) vwJobListQueryBuilder.andWhere('weight BETWEEN :min AND :max', { min: totalWeight[0], max: totalWeight[1] })
+    if (productName) vwJobListQueryBuilder.andWhere('product_name = :productName', { productName })
+    if (productTypeId) vwJobListQueryBuilder.andWhere('product_type_id = ANY (:productTypeId)', { productTypeId })
+    if (truckType) vwJobListQueryBuilder.andWhere('truck_type = ANY (:truckType)', { truckType })
+    if (status) vwJobListQueryBuilder.andWhere('status = :status', { status })
+    if (truckAmount) vwJobListQueryBuilder.andWhere('required_truck_amount BETWEEN :min AND :max', { min: truckAmount[0], max: truckAmount[1] })
+    return vwJobListQueryBuilder
+      .orderBy(orderBy)
+      .take(filter.take)
+      .skip(filter.skip)
+      .getManyAndCount();
+  }
+
   async fullTextSearch(data: JobFullTextSearch): Promise<any> {
     const server: any = this.instance
     const viewJobList: Repository<VwJobList> = server?.db?.vwJobList;
