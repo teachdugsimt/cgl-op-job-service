@@ -150,44 +150,44 @@ export default class JobService {
       jobs = await viewJobRepositry.fullTextSearch(options);
     } else {
       if (maxWeight && minWeight) {
-        filterTotalWeight.totalWeight = Between(minWeight, maxWeight);
+        filterTotalWeight.totalWeight = [minWeight, maxWeight];
       } else if (maxWeight) {
-        filterTotalWeight.totalWeight = Between(0, maxWeight);
+        filterTotalWeight.totalWeight = [0, maxWeight];
       } else if (minWeight) {
-        filterTotalWeight.totalWeight = Between(minWeight, 999999);
+        filterTotalWeight.totalWeight = [minWeight, 999999];
       }
 
       if (truckAmountMax && truckAmountMin) {
-        filterTruckAmount.truckAmount = Between(truckAmountMin, truckAmountMax);
+        filterTruckAmount.truckAmount = [truckAmountMin, truckAmountMax];
       } else if (truckAmountMax) {
-        filterTruckAmount.truckAmount = Between(0, truckAmountMax);
+        filterTruckAmount.truckAmount = [0, truckAmountMax];
       } else if (truckAmountMin) {
-        filterTruckAmount.truckAmount = Between(truckAmountMin, 999999);
+        filterTruckAmount.truckAmount = [truckAmountMin, 999999];
       }
 
       conditionForMobileSearch = {
-        ...(from ? { loadingAddress: ILike(`%${from}%`) } : undefined),
+        ...(from ? { address: from } : undefined),
         // ...(to ? {}),
         ...filterTotalWeight,
         // ...(owner ? {}),
         ...(productName ? { productName } : undefined),
-        ...(productType ? { productTypeId: In(JSON.parse(productType)) } : undefined),
+        ...(productType?.length ? { productTypeId: JSON.parse(productType) } : undefined),
         ...filterTruckAmount,
-        ...(truckType ? { truckType: In(JSON.parse(truckType)) } : undefined),
+        ...(truckType?.length ? { truckType: JSON.parse(truckType) } : undefined),
         ...(status ? { status } : undefined),
         isDeleted: isDeleted // Remove this attribute when user is admin
       }
 
       const options: FindManyOptions = {
-        where: textSearch ? conditionForFullTextSearch : conditionForMobileSearch,
+        where: conditionForMobileSearch,
         take: numbOfLimit,
         skip: numbOfPage,
         order: {
-          [sortBy]: descending ? 'DESC' : 'ASC'
+          [camelToSnakeCase(sortBy)]: descending ? 'DESC' : 'ASC'
         },
       }
 
-      jobs = await viewJobRepositry.findAndCount(options)
+      jobs = await viewJobRepositry.findAndCountV2(options)
     }
 
     const jobMapping = jobs[0]?.map((job: any) => {
