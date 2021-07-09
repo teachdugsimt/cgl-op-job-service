@@ -23,7 +23,9 @@ import { ViewEntity, ViewColumn, ObjectIdColumn, AfterLoad } from "typeorm";
 	j.is_deleted AS is_deleted,
 	JSON_BUILD_OBJECT('id', usr.id, 'fullName', usr.fullname, 'email', usr.email, 'mobileNo', usr.phone_number, 'avatar', JSON_BUILD_OBJECT('object', usr.avatar)) AS owner,
 	JSON_AGG(JSON_BUILD_OBJECT('name', s.address_dest, 'dateTime', s.delivery_datetime, 'contactName', s.fullname_dest, 'contactMobileNo', s.phone_dest, 'lat', s.latitude_dest::VARCHAR, 'lng', s.longitude_dest::VARCHAR)) AS shipments,
-	j.full_text_search AS full_text_search
+	j.full_text_search AS full_text_search,
+	vwtrip.trips AS trips,
+	(CASE WHEN vwbook.id IS NOT NULL THEN (JSON_AGG(JSON_BUILD_OBJECT('fullname', vwbook.fullname, 'avatar', vwbook.avatar, 'truck', vwbook.truck, 'booking_datetime', vwbook.booking_datetime))) ELSE NULL END) AS quotations
 FROM
 	job j
 	LEFT JOIN shipment s ON s.job_id = j.id
@@ -33,6 +35,16 @@ FROM
 		fullname text,
 		phone_number text,
 		avatar text) ON usr.id = j.user_id
+	LEFT JOIN dblink('bookserver'::text, 'SELECT job_id, trips FROM vw_trip_with_truck_detail' ::text) vwtrip (
+		job_id integer,
+		trips JSONB) ON vwtrip.job_id = j.id
+	LEFT JOIN dblink('bookserver'::text, 'SELECT id, job_id, fullname, avatar, truck, booking_datetime FROM vw_booking' ::text) vwbook (
+		id INTEGER,
+		job_id integer,
+		fullname VARCHAR,
+		avatar JSONB,
+		truck JSONB,
+		booking_datetime TIMESTAMP) ON vwbook.job_id = j.id
 GROUP BY j.id,
 	j.user_id,
 	j.product_type_id,
@@ -56,7 +68,9 @@ GROUP BY j.id,
 	usr.email,
 	usr.fullname,
 	usr.phone_number,
-	usr.avatar;
+	usr.avatar,
+	vwtrip.trips,
+	vwbook.id;
   `
 })
 export class VwJobList {
@@ -138,6 +152,76 @@ export class VwJobList {
 
   @ViewColumn({ name: 'full_text_search' })
   fullTextSearch?: string
+
+  @ViewColumn({ name: 'trips' })
+  trips!: Array<{
+    id: number,
+    truckId: number,
+    weight: number,
+    price: number,
+    priceType: string,
+    status: string,
+    bookingId: number,
+    truckType: string,
+    stallHeight: string,
+    createdAt: Date,
+    updatedAt: Date,
+    approveStatus: string,
+    phoneNumber: string,
+    registrationNumber: Array<string>,
+    workingZones?: Array<{
+      region: number,
+      province: number
+    }>,
+    owner: {
+      id: number
+      fullName: string
+      email: string
+      mobileNo: string
+      avatar: {
+        object: string
+      }
+    },
+    tipper: boolean
+  }>
+
+  @ViewColumn({ name: 'quotations' })
+  quotations!: Array<{
+    id: string
+    fullName: string
+    bookingDatetime: Date
+    avatar: {
+      object: string
+    }
+    truck: {
+      id: number
+      owner: {
+        id: number
+        fullName: string
+        email: string
+        mobileNo: string
+        avatar: {
+          object: string
+        }
+      }
+      tipper: boolean
+      workingZones?: Array<{
+        region: number
+        province: number
+      }>
+      createdAt: Date
+      updatedAt: Date
+      truckType: string
+      stallHeight: string
+      truck_photos: {
+        back: string
+        left: string
+      }
+      approveStatus: string
+      registrationNumber: Array<string>
+      loading_weight: number
+    }
+  }>
 
   @AfterLoad()
   removeUserId() {

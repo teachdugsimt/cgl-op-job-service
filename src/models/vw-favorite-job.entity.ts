@@ -3,32 +3,65 @@ import { ViewEntity, ViewColumn, ObjectIdColumn } from "typeorm";
 @ViewEntity({
   name: 'vw_favorite_job',
   expression!: `SELECT
-  vw.id,
-  vw.user_id,
-  vw.product_type_id,
-  vw.product_name,
-  vw.truck_type,
-  vw.weight,
-  vw.required_truck_amount,
-  vw.loading_address,
-  vw.loading_datetime,
-  vw.loading_contact_name,
-  vw.loading_contact_phone,
-  vw.loading_latitude,
-  vw.loading_longitude,
-  vw.status,
-  vw.price,
-  vw.price_type,
-  vw.tipper,
-  vw.is_deleted,
-  vw.owner,
-  vw.shipments,
-  f.updated_at AS created_at
+	j.id,
+	f.user_id,
+	j.product_type_id,
+	j.product_name,
+	j.truck_type,
+	j.total_weight AS weight,
+	j.truck_amount AS required_truck_amount,
+	j.loading_address,
+	j.loading_datetime,
+	j.loading_contact_name,
+	j.loading_contact_phone,
+	j.loading_latitude,
+	j.loading_longitude,
+	j.status,
+	j.offered_total AS price,
+	j.price_type,
+	j.tipper,
+	j.is_deleted,
+	JSON_BUILD_OBJECT('id', usr.id, 'fullName', usr.fullname, 'email', usr.email, 'mobileNo', usr.phone_number, 'avatar', JSON_BUILD_OBJECT('object', usr.avatar)) AS owner,
+	JSON_AGG(JSON_BUILD_OBJECT('name', s.address_dest, 'dateTime', s.delivery_datetime, 'contactName', s.fullname_dest, 'contactMobileNo', s.phone_dest, 'lat', s.latitude_dest::VARCHAR, 'lng', s.longitude_dest::VARCHAR)) AS shipments,
+	f.updated_at AS created_at
 FROM
-  favorite f
-  LEFT JOIN vw_job_list vw ON vw.id = f.job_id
-WHERE
-  f.is_deleted = FALSE;
+	job j
+	LEFT JOIN shipment s ON s.job_id = j.id
+	LEFT JOIN favorite f ON f.job_id = j.id
+	LEFT JOIN dblink('myserver'::text, 'SELECT id,email,fullname,phone_number,avatar FROM user_profile' ::text) usr (
+		id integer,
+		email text,
+		fullname text,
+		phone_number text,
+		avatar text) ON usr.id = j.user_id
+WHERE 
+	f.is_deleted = FALSE
+GROUP BY j.id,
+	j.user_id,
+	j.product_type_id,
+	j.product_name,
+	j.truck_type,
+	j.total_weight,
+	j.truck_amount,
+	j.loading_address,
+	j.loading_datetime,
+	j.loading_contact_name,
+	j.loading_contact_phone,
+	j.loading_latitude,
+	j.loading_longitude,
+	j.status,
+	j.offered_total,
+	j.price_type,
+	j.tipper,
+	j.is_deleted,
+	j.full_text_search,
+	usr.id,
+	usr.email,
+	usr.fullname,
+	usr.phone_number,
+	usr.avatar,
+	f.updated_at,
+	f.user_id;
   `,
 })
 export class VwFavoriteJob {

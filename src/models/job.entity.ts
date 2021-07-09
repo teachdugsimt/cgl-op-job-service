@@ -8,8 +8,16 @@ export class Job {
   @PrimaryGeneratedColumn({ type: "bigint", name: "id" })
   id: string;
 
-  @Column("smallint", { name: "status" })
-  status: number;
+  // @Column("smallint", { name: "status" })
+  // status: number;
+
+  @Column("enum", {
+    name: "status",
+    nullable: true,
+    enum: ['NEW', 'INPROGRESS', 'CANCELLED', 'DONE', 'EXPIRED'],
+    default: 'NEW'
+  })
+  status: 'NEW' | 'INPROGRESS' | 'CANCELLED' | 'DONE' | 'EXPIRED' | null;
 
   @Column("numeric", { name: "offered_total", precision: 12, scale: 2 })
   offeredTotal: string;
@@ -351,6 +359,12 @@ export class Job {
 
   @Column("boolean", { name: "tipper", nullable: true, default: () => "false" })
   tipper: boolean | null;
+
+  @Column({ name: 'full_text_search' })
+  fullTextSearch?: string
+
+  @Column({ name: 'reason' })
+  reason?: string
 
   @AfterLoad()
   getUserId() {

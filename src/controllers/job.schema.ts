@@ -47,6 +47,13 @@ export const filterSchema: FastifySchema = {
 }
 
 export const getJobDetailSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+    require: ['authorization']
+  },
   params: {
     jobId: { type: 'string' }
   },
@@ -100,11 +107,18 @@ export const getJobDetailSchema: FastifySchema = {
             userId: { type: 'string' }
           }
         },
-        "status": { type: 'number' },
-        "quotations": { type: 'array' },
-        "price": { type: 'number' },
-        "priceType": { type: 'string' },
-        "tipper": { type: 'boolean' }
+        status: { type: 'number' },
+        price: { type: 'number' },
+        priceType: { type: 'string' },
+        tipper: { type: 'boolean' },
+        trips: {
+          type: 'array',
+          properties: {}
+        },
+        quotations: {
+          type: 'array',
+          properties: {}
+        },
       },
       additionalProperties: false
     }
@@ -340,6 +354,64 @@ export const myJobSchema: FastifySchema = {
         numberOfElements: { type: 'number' },
       },
       additionalProperties: false
+    }
+  }
+}
+
+export const finishJobSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+    require: ['authorization']
+  },
+  params: {
+    jobId: { type: 'string' }
+  },
+  body: {
+    type: 'object',
+    properties: {
+      reason: { type: 'string' }
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+      },
+      additionalProperties: true
+    }
+  }
+}
+
+export const getMasterJobSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+  },
+  params: {
+    jobId: { type: 'string' }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        truckType: { type: 'string' },
+        truckAmount: { type: 'number' },
+        productTypeId: { type: 'string' },
+        productName: { type: 'string' },
+        weight: { type: 'number' },
+        price: { type: 'number' },
+        tipper: { type: 'boolean' },
+        priceType: { type: 'string' },
+        expiredTime: { type: 'string' },
+        note: { type: 'string' },
+      },
+      additionalProperties: true
     }
   }
 }

@@ -1,9 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { FastifyInstanceToken, getInstanceByToken } from 'fastify-decorators';
 import { Job } from '../models';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
 import { JobCreateEntity, JobUpdateEntity } from './repository.types';
 
+type JobStatusProps = 'NEW' | 'INPROGRESS' | 'CANCELLED' | 'DONE' | 'EXPIRED'
 export default class JobRepository {
 
   private instance: FastifyInstance = getInstanceByToken(FastifyInstanceToken);
@@ -14,10 +15,10 @@ export default class JobRepository {
     return jobRepository.save(data);
   }
 
-  async findById(id: number): Promise<any> {
+  async findById(id: number, opts?: FindOneOptions): Promise<any> {
     const server: any = this.instance;
     const jobRepository: Repository<Job> = server?.db?.jobs;
-    return jobRepository.findOne(id);
+    return jobRepository.findOne(id, opts);
   }
 
   async find(options: FindManyOptions): Promise<any> {
@@ -32,7 +33,7 @@ export default class JobRepository {
     return jobRepository.findAndCount(filter);
   }
 
-  async update(id: number, data: JobUpdateEntity): Promise<any> {
+  async update(id: number, data: Partial<Job>): Promise<any> {
     const server: any = this.instance
     const jobRepository: Repository<Job> = server?.db?.jobs;
 
@@ -65,6 +66,14 @@ export default class JobRepository {
       WHERE id = $1`,
       [id, ...texts]
     )
+  }
+
+  async updateTripStatusByJobId(jobId: number, status: JobStatusProps): Promise<any> {
+    const server: any = this.instance
+    const jobRepository: Repository<Job> = server?.db?.jobs;
+    return jobRepository.query(
+      `SELECT * FROM dblink('bookserver'::text, FORMAT('UPDATE trip t SET status = %L FROM job_carrier jc WHERE t.job_carrier_id = jc.id AND jc.job_id = %L;', '${status}', ${jobId})::TEXT) jsv (updated TEXT)`
+    );
   }
 
 }

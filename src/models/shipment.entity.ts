@@ -8,8 +8,16 @@ export class Shipment {
   @Column("integer", { name: "job_id" })
   jobId: number;
 
-  @Column("smallint", { name: "status" })
-  status: number;
+  // @Column("smallint", { name: "status" })
+  // status: number;
+
+  @Column("enum", {
+    name: "status",
+    nullable: true,
+    enum: ['NEW', 'INPROGRESS', 'CANCELLED', 'DONE', 'EXPIRED'],
+    default: 'NEW'
+  })
+  status: 'NEW' | 'INPROGRESS' | 'CANCELLED' | 'DONE' | 'EXPIRED' | null;
 
   @Column("character varying", {
     name: "address_org",

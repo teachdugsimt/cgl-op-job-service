@@ -5,6 +5,7 @@ import VwJobListRepository from '../repositories/vw-job-list.repository';
 import ShipmentRepository from '../repositories/shipment.repository';
 import date from 'date-and-time';
 import Utility from 'utility-layer/dist/security';
+import Token from 'utility-layer/dist/token';
 import lodash from 'lodash';
 
 interface JobFindEntity {
@@ -70,10 +71,15 @@ interface ShipmentDestination {
   longitudeDest: string
 }
 
+interface OptionalFinishJobProps {
+  reason?: string
+  isAdmin?: boolean
+}
+
 type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'status' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted' | 'textSearch'>
 
 enum JobStatus {
-  ACTIVE = 1
+  NEW = 'NEW'
 }
 
 enum Platform {
@@ -85,6 +91,7 @@ const jobRepository = new JobRepository();
 const viewJobRepositry = new VwJobListRepository();
 const shipmentRepository = new ShipmentRepository();
 const utility = new Utility();
+const token = new Token();
 
 const camelToSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
@@ -215,7 +222,7 @@ export default class JobService {
           userId: utility.encodeUserId(job.owner.id)
         },
         status: job.status,
-        quotations: [],
+        // quotations: [],
         price: Math.round(job.price * 100) / 100,
         priceType: job.priceType,
         tipper: job.tipper
@@ -256,10 +263,11 @@ export default class JobService {
         userId: utility.encodeUserId(job.owner.id)
       },
       status: job.status,
-      quotations: [],
       price: Math.round(job.price * 100) / 100,
       priceType: job.priceType,
-      tipper: job.tipper
+      tipper: job.tipper,
+      trips: job?.trips ?? [],
+      quotations: job?.quotations ?? [],
     }
   }
 
@@ -269,7 +277,7 @@ export default class JobService {
     let destinationData: string = '';
 
     const jobParams = {
-      status: JobStatus.ACTIVE,
+      status: JobStatus.NEW,
       offeredTotal: data.price,
       createdUser: decodeUserId,
       updatedUser: decodeUserId,
@@ -302,7 +310,7 @@ export default class JobService {
       destinationData += `${shipment.name} ${shipment.contactName} ${shipment.contactMobileNo} `;
       return {
         jobId: jobResult.id,
-        status: JobStatus.ACTIVE,
+        status: JobStatus.NEW,
         addressDest: shipment.name,
         // deliveryDatetime: shipment.dateTime,
         deliveryDatetime: new Date(date.parse(shipment.dateTime, this.dateFormatWithMs)),
@@ -403,7 +411,7 @@ export default class JobService {
         console.log('JSON.stringify(shipmentForAdd) :>> ', JSON.stringify(shipmentForAdd));
         const shipmentParams = shipmentForAdd.map((shipment) => ({
           jobId: decodeJobId,
-          status: JobStatus.ACTIVE,
+          status: JobStatus.NEW,
           addressDest: shipment.name,
           deliveryDatetime: new Date(date.parse(shipment.dateTime, this.dateFormatWithMs)),
           fullnameDest: shipment.contactName,
@@ -503,6 +511,51 @@ export default class JobService {
     return {
       data: jobMapping || [],
       count: jobs[1] || 0,
+    }
+  }
+
+  async finishJob(userId: string, jobId: string, optional?: OptionalFinishJobProps): Promise<any> {
+    const decodeUserId = utility.decodeUserId(userId);
+    const decodeJobId = utility.decodeUserId(jobId);
+    const reason = optional?.reason
+    const isAdmin = optional?.isAdmin
+
+    let jobOption: any = {}
+    if (!isAdmin) jobOption.where = { userId: decodeUserId }
+    const jobStatus: any = reason && reason === 'CANCELJOB' ? 'CANCELLED' : 'DONE'
+    const dataForUpdateJob = {
+      status: jobStatus,
+      userId: decodeUserId,
+      ...(reason ? { reason } : undefined),
+    }
+    const vwJobData = await viewJobRepositry.findById(decodeJobId, jobOption);
+
+    if (vwJobData) {
+      if (vwJobData?.trips) {
+        await jobRepository.updateTripStatusByJobId(decodeJobId, jobStatus);
+      }
+      return jobRepository.update(decodeJobId, dataForUpdateJob);
+    }
+    throw new Error('You do not have permission to access');
+  }
+
+  async findMstJob(jobId: string): Promise<any> {
+    const decodeJobId = utility.decodeUserId(jobId);
+    const job = await jobRepository.findById(decodeJobId, {
+      select: ['id', 'offeredTotal', 'priceType', 'productName', 'productTypeId', 'truckAmount', 'status', 'tipper', 'truckType', 'totalWeight']
+    });
+
+    return {
+      id: jobId,
+      productTypeId: job.productTypeId,
+      productName: job.productName,
+      truckType: job.truckType,
+      weight: Math.round(job.totalWeight * 100) / 100,
+      requiredTruckAmount: job.truckAmount,
+      status: job.status,
+      price: Math.round(job.offeredTotal * 100) / 100,
+      priceType: job.priceType,
+      tipper: job.tipper
     }
   }
 

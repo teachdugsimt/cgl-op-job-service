@@ -1,5 +1,5 @@
 export interface JobCreateEntity {
-  status?: number
+  status?: 'NEW' | 'INPROGRESS' | 'CANCELLED' | 'DONE' | 'EXPIRED' | null
   offeredTotal?: string // number
   createdUser: string
   updatedUser?: string
