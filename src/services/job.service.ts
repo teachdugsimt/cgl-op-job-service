@@ -239,6 +239,23 @@ export default class JobService {
     const id = utility.decodeUserId(jobId);
     const job = await viewJobRepositry.findById(id);
 
+    if (job.quotations?.length) {
+      job.quotations = job.quotations.map((quotation: any) => {
+        return {
+          ...quotation,
+          id: utility.encodeUserId(quotation.id),
+          truck: {
+            ...quotation.truck,
+            id: utility.encodeUserId(quotation.truck.id),
+            owner: {
+              ...(quotation?.truck?.owner?.id ? { ...quotation.truck.owner, id: utility.encodeUserId(quotation.truck.owner.id) } : {})
+            }
+          },
+          bookingDatetime: date.format(new Date(job.loadingDatetime), this.dateFormat)
+        }
+      });
+    }
+
     return {
       id: utility.encodeUserId(job.id),
       productTypeId: job.productTypeId,
