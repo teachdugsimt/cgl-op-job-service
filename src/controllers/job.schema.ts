@@ -433,7 +433,7 @@ export const getJobSomeoneElseSchema: FastifySchema = {
       rowsPerPage: { type: 'number' },
       status: {
         type: 'string',
-        enum: ['INPROGRESS', 'DONE']
+        enum: ['NEW', 'INPROGRESS', 'DONE']
       },
     }
   },

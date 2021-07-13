@@ -236,16 +236,22 @@ export default class JobController {
   })
   async findJobSomeoneElse(req: FastifyRequest<{
     Headers: { authorization: string },
-    Querystring: { userId: string, status: string, page?: number, rowsPerPage?: number, }
+    Querystring: { userId: string, status?: string, page?: number, rowsPerPage?: number, }
   }>, reply: FastifyReply): Promise<object> {
     try {
       const {
         userId,
         page = 1,
-        rowsPerPage = 10
+        rowsPerPage = 10,
+        status = 'NEW'
       } = req.query;
 
-      const jobs = await this.jobService.getJobWithUserId(userId, req.query);
+      const filter = {
+        ...req.query,
+        status: status
+      }
+
+      const jobs = await this.jobService.getJobWithUserId(userId, filter);
 
       return {
         data: jobs.data,
