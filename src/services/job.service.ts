@@ -19,7 +19,7 @@ interface JobFindEntity {
   productType?: string
   rowsPerPage?: number
   sortBy?: string
-  status?: number
+  status?: number | string
   to?: string
   truckAmountMax?: number
   truckAmountMin?: number
@@ -76,7 +76,7 @@ interface OptionalFinishJobProps {
   isAdmin?: boolean
 }
 
-type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'status' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted' | 'textSearch'>
+type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted' | 'textSearch'>
 
 enum JobStatus {
   NEW = 'NEW'
@@ -483,12 +483,13 @@ export default class JobService {
     return true;
   }
 
-  async getMyJob(userId: string, filter: FindMyJobEntity): Promise<any> {
+  async getJobWithUserId(userId: string, filter: FindMyJobEntity): Promise<any> {
     let {
-      descending,
-      page,
-      rowsPerPage,
+      descending = true,
+      page = 1,
+      rowsPerPage = 10,
       sortBy = 'id',
+      status
     } = filter
 
     const decodeUserId = utility.decodeUserId(userId);
@@ -507,7 +508,10 @@ export default class JobService {
     }
 
     const options: FindManyOptions = {
-      where: { userId: decodeUserId },
+      where: {
+        userId: decodeUserId,
+        ...(status ? { status } : undefined)
+      },
       take: numbOfLimit,
       skip: numbOfPage,
       order: {
@@ -543,7 +547,7 @@ export default class JobService {
           companyName: job.owner.fullName
         },
         status: job.status,
-        quotations: [],
+        // quotations: job?.quotations ?? [],
         price: Math.round(job.price * 100) / 100,
         priceType: job.priceType,
         tipper: job.tipper

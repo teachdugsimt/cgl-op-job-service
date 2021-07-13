@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { Controller, DELETE, GET, getInstanceByToken, PATCH, POST } from 'fastify-decorators';
 import JobService from '../services/job.service';
 import FavoriteService from '../services/favorite.service';
-import { addFavoriteJobSchema, createJobSchema, deleteJobSchema, filterSchema, finishJobSchema, getFavoriteJobSchema, getJobDetailSchema, getMasterJobSchema, myJobSchema, updateJobSchema } from './job.schema';
+import { addFavoriteJobSchema, createJobSchema, deleteJobSchema, filterSchema, finishJobSchema, getFavoriteJobSchema, getJobDetailSchema, getJobSomeoneElseSchema, getMasterJobSchema, myJobSchema, updateJobSchema } from './job.schema';
 import Security from 'utility-layer/dist/security';
 import TokenValidate from 'utility-layer/dist/token';
 
@@ -172,7 +172,7 @@ export default class JobController {
   }>, reply: FastifyReply): Promise<object> {
     try {
       const userId = security.getUserIdByToken(req.headers.authorization);
-      return await this.jobService.getMyJob(userId, req.query);
+      return await this.jobService.getJobWithUserId(userId, req.query);
     } catch (err) {
       console.log('err :>> ', err);
       throw err;
@@ -221,6 +221,40 @@ export default class JobController {
   }>, reply: FastifyReply): Promise<object> {
     try {
       return await this.jobService.findMstJob(req.params.jobId)
+    } catch (err) {
+      console.log('err :>> ', err);
+      reply.status(400);
+      throw err;
+    }
+  }
+
+  @GET({
+    url: '/list/user',
+    options: {
+      schema: getJobSomeoneElseSchema
+    }
+  })
+  async findJobSomeoneElse(req: FastifyRequest<{
+    Headers: { authorization: string },
+    Querystring: { userId: string, status: string, page?: number, rowsPerPage?: number, }
+  }>, reply: FastifyReply): Promise<object> {
+    try {
+      const {
+        userId,
+        page = 1,
+        rowsPerPage = 10
+      } = req.query;
+
+      const jobs = await this.jobService.getJobWithUserId(userId, req.query);
+
+      return {
+        data: jobs.data,
+        size: rowsPerPage,
+        currentPage: page,
+        totalPages: Math.ceil(jobs.count / (+rowsPerPage)),
+        totalElements: jobs.count,
+        numberOfElements: jobs.data.length ?? 0,
+      }
     } catch (err) {
       console.log('err :>> ', err);
       reply.status(400);

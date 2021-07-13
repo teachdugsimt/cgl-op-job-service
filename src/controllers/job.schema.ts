@@ -416,3 +416,39 @@ export const getMasterJobSchema: FastifySchema = {
     }
   }
 }
+
+export const getJobSomeoneElseSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+  },
+  querystring: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string' },
+      descending: { type: 'boolean' },
+      page: { type: 'number' },
+      rowsPerPage: { type: 'number' },
+      status: {
+        type: 'string',
+        enum: ['INPROGRESS', 'DONE']
+      },
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: { type: 'array' },
+        size: { type: 'number' },
+        currentPage: { type: 'number' },
+        totalPages: { type: 'number' },
+        totalElements: { type: 'number' },
+        numberOfElements: { type: 'number' },
+      },
+      additionalProperties: true
+    }
+  }
+}
