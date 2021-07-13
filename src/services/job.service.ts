@@ -248,7 +248,7 @@ export default class JobService {
             ...quotation.truck,
             id: utility.encodeUserId(quotation.truck.id),
             owner: {
-              ...(quotation?.truck?.owner?.id ? { ...quotation.truck.owner, id: utility.encodeUserId(quotation.truck.owner.id) } : {})
+              ...(quotation?.truck?.owner?.id ? { ...quotation.truck.owner, userId: utility.encodeUserId(quotation.truck.owner.id) } : {})
             }
           },
           bookingDatetime: date.format(new Date(job.loadingDatetime), this.dateFormat)
@@ -264,7 +264,7 @@ export default class JobService {
           bookingId: utility.encodeUserId(trip.bookingId),
           truckId: utility.encodeUserId(trip.truckId),
           owner: {
-            ...(trip?.owner?.id ? { ...trip.owner, id: utility.encodeUserId(trip.owner.id) } : {})
+            ...(trip?.owner?.id ? { ...trip.owner, userId: utility.encodeUserId(trip.owner.id) } : {})
           }
         }
       })
