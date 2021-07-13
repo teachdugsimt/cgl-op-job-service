@@ -256,6 +256,20 @@ export default class JobService {
       });
     }
 
+    if (job.trips?.length) {
+      job.trips = job.trips.map((trip: any) => {
+        return {
+          ...trip,
+          id: utility.encodeUserId(trip.id),
+          bookingId: utility.encodeUserId(trip.bookingId),
+          truckId: utility.encodeUserId(trip.truckId),
+          owner: {
+            ...(trip?.owner?.id ? { ...trip.owner, id: utility.encodeUserId(trip.owner.id) } : {})
+          }
+        }
+      })
+    }
+
     return {
       id: utility.encodeUserId(job.id),
       productTypeId: job.productTypeId,
