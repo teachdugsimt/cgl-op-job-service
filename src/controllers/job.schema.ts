@@ -96,6 +96,7 @@ export const getJobDetailSchema: FastifySchema = {
           properties: {
             id: { type: 'number' },
             fullName: { type: 'string' },
+            companyName: { type: 'string' },
             email: { type: 'string' },
             mobileNo: { type: 'string' },
             avatar: {

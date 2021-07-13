@@ -219,7 +219,8 @@ export default class JobService {
         })),
         owner: {
           ...job.owner,
-          userId: utility.encodeUserId(job.owner.id)
+          userId: utility.encodeUserId(job.owner.id),
+          companyName: job.owner.fullName
         },
         status: job.status,
         // quotations: [],
@@ -248,7 +249,11 @@ export default class JobService {
             ...quotation.truck,
             id: utility.encodeUserId(quotation.truck.id),
             owner: {
-              ...(quotation?.truck?.owner?.id ? { ...quotation.truck.owner, userId: utility.encodeUserId(quotation.truck.owner.id) } : {})
+              ...(quotation?.truck?.owner?.id ? {
+                ...quotation.truck.owner,
+                userId: utility.encodeUserId(quotation.truck.owner.id),
+                companyName: quotation.truck.owner.fullName
+              } : {})
             }
           },
           bookingDatetime: date.format(new Date(job.loadingDatetime), this.dateFormat)
@@ -264,7 +269,11 @@ export default class JobService {
           bookingId: utility.encodeUserId(trip.bookingId),
           truckId: utility.encodeUserId(trip.truckId),
           owner: {
-            ...(trip?.owner?.id ? { ...trip.owner, userId: utility.encodeUserId(trip.owner.id) } : {})
+            ...(trip?.owner?.id ? {
+              ...trip.owner,
+              userId: utility.encodeUserId(trip.owner.id),
+              companyName: trip.owner.fullName
+            } : {})
           }
         }
       })
@@ -291,7 +300,8 @@ export default class JobService {
       })),
       owner: {
         ...job.owner,
-        userId: utility.encodeUserId(job.owner.id)
+        userId: utility.encodeUserId(job.owner.id),
+        companyName: job.owner.fullName
       },
       status: job.status,
       price: Math.round(job.price * 100) / 100,
@@ -529,7 +539,8 @@ export default class JobService {
         })),
         owner: {
           ...job.owner,
-          userId: utility.encodeUserId(job.owner.id)
+          userId: utility.encodeUserId(job.owner.id),
+          companyName: job.owner.fullName
         },
         status: job.status,
         quotations: [],

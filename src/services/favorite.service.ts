@@ -63,7 +63,8 @@ export default class JobService {
         })),
         owner: {
           ...favorite.owner,
-          userId: utility.encodeUserId(favorite.owner.id)
+          userId: utility.encodeUserId(favorite.owner.id),
+          companyName: favorite.owner.fullName
         },
         status: favorite.status,
         quotations: [],
