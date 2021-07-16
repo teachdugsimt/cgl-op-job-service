@@ -204,7 +204,7 @@ export default class JobService {
         productName: job.productName,
         truckType: job.truckType,
         weight: Math.round(job.weight * 100) / 100,
-        requiredTruckAmount: job.truckAmount,
+        requiredTruckAmount: job.requiredTruckAmount,
         from: {
           name: job.loadingAddress,
           dateTime: job.loadingDatetime && date.isValid(job.loadingDatetime) ? date.format(new Date(job.loadingDatetime), this.dateFormat) : null,
@@ -285,7 +285,7 @@ export default class JobService {
       productName: job.productName,
       truckType: job.truckType,
       weight: Math.round(job.weight * 100) / 100,
-      requiredTruckAmount: job.truckAmount,
+      requiredTruckAmount: job.requiredTruckAmount,
       from: {
         name: job.loadingAddress,
         dateTime: date.format(new Date(job.loadingDatetime), this.dateFormat),

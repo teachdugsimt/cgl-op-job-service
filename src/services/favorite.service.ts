@@ -48,7 +48,7 @@ export default class JobService {
         productName: favorite.productName,
         truckType: favorite.truckType,
         weight: Math.round(favorite.weight * 100) / 100,
-        requiredTruckAmount: favorite.truckAmount,
+        requiredTruckAmount: favorite.requiredTruckAmount,
         from: {
           name: favorite.loadingAddress,
           dateTime: date.isValid(favorite.loadingDatetime) ? date.format(new Date(favorite.loadingDatetime), this.dateFormat) : null,

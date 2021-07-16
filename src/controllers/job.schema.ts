@@ -66,6 +66,7 @@ export const getJobDetailSchema: FastifySchema = {
         productName: { type: 'string' },
         truckType: { type: 'string' },
         weight: { type: 'number' },
+        requiredTruckAmount: { type: 'number' },
         from: {
           type: 'object',
           properties: {
