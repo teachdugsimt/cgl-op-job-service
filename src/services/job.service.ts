@@ -266,7 +266,8 @@ export default class JobService {
             truckPhotos: quotation.truck?.truck_photos,
             approveStatus: quotation.truck?.approve_status,
             loadingWeight: quotation.truck?.loading_weight,
-            registrationNumber: quotation.truck?.registration_number
+            registrationNumber: quotation.truck?.registration_number,
+            phoneNumber: quotation.truck?.owner?.mobileNo ?? null
           },
           bookingDatetime: date.format(new Date(job.loadingDatetime), this.dateFormat)
         }
