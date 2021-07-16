@@ -20,7 +20,7 @@ export const filterSchema: FastifySchema = {
       productType: { type: 'string' },
       rowsPerPage: { type: 'number' },
       sortBy: { type: 'string' },
-      status: { type: 'number' },
+      status: { type: 'string' },
       to: { type: 'string' },
       truckAmountMax: { type: 'number' },
       truckAmountMin: { type: 'number' },
@@ -67,6 +67,7 @@ export const getJobDetailSchema: FastifySchema = {
         truckType: { type: 'string' },
         weight: { type: 'number' },
         requiredTruckAmount: { type: 'number' },
+        publicAsCgl: { type: 'boolean' },
         from: {
           type: 'object',
           properties: {
@@ -109,7 +110,7 @@ export const getJobDetailSchema: FastifySchema = {
             userId: { type: 'string' }
           }
         },
-        status: { type: 'number' },
+        status: { type: 'string' },
         price: { type: 'number' },
         priceType: { type: 'string' },
         tipper: { type: 'boolean' },
@@ -148,6 +149,7 @@ export const createJobSchema: FastifySchema = {
       priceType: { type: 'string' },
       expiredTime: { type: 'string' },
       note: { type: 'string' },
+      publicAsCgl: { type: 'boolean' },
       from: {
         type: 'object',
         properties: {
@@ -212,6 +214,7 @@ export const updateJobSchema: FastifySchema = {
       priceType: { type: 'string' },
       expiredTime: { type: 'string' },
       note: { type: 'string' },
+      publicAsCgl: { type: 'boolean' },
       from: {
         type: 'object',
         properties: {

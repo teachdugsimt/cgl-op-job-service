@@ -366,6 +366,9 @@ export class Job {
   @Column({ name: 'reason' })
   reason?: string
 
+  @Column("boolean", { name: "public_as_cgl", nullable: false, default: () => "false" })
+  publicAsCgl: boolean;
+
   @AfterLoad()
   getUserId() {
     this.id = util.encodeUserId(+this.id);

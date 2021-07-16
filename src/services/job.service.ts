@@ -41,6 +41,7 @@ interface AddJobEntity {
   priceType: string
   expiredTime: string
   note?: string
+  publicAsCgl?: boolean,
   from: {
     name: string
     dateTime: string
@@ -226,7 +227,8 @@ export default class JobService {
         // quotations: [],
         price: Math.round(job.price * 100) / 100,
         priceType: job.priceType,
-        tipper: job.tipper
+        tipper: job.tipper,
+        publicAsCgl: job.publicAsCgl,
       }
     })
 
@@ -246,7 +248,7 @@ export default class JobService {
           ...quotation,
           id: utility.encodeUserId(quotation.id),
           truck: {
-            ...quotation.truck,
+            // ...quotation.truck,
             id: utility.encodeUserId(quotation.truck.id),
             owner: {
               ...(quotation?.truck?.owner?.id ? {
@@ -254,7 +256,17 @@ export default class JobService {
                 userId: utility.encodeUserId(quotation.truck.owner.id),
                 companyName: quotation.truck.owner.fullName
               } : {})
-            }
+            },
+            tipper: quotation.truck?.tipper,
+            workingZones: quotation.truck?.work_zone,
+            createdAt: quotation.truck?.created_at && date.format(new Date(quotation.truck?.created_at), this.dateFormat),
+            updatedAt: quotation.truck?.updated_at && date.format(new Date(quotation.truck?.updated_at), this.dateFormat),
+            truckType: quotation.truck?.truck_type,
+            stallHeight: quotation.truck?.stall_height,
+            truckPhotos: quotation.truck?.truck_photos,
+            approveStatus: quotation.truck?.approve_status,
+            loadingWeight: quotation.truck?.loading_weight,
+            registrationNumber: quotation.truck?.registration_number
           },
           bookingDatetime: date.format(new Date(job.loadingDatetime), this.dateFormat)
         }
@@ -307,6 +319,7 @@ export default class JobService {
       price: Math.round(job.price * 100) / 100,
       priceType: job.priceType,
       tipper: job.tipper,
+      publicAsCgl: job.publicAsCgl,
       trips: job?.trips ?? [],
       quotations: job?.quotations ?? [],
     }
@@ -341,6 +354,7 @@ export default class JobService {
       loadingLatitude: +data.from.lat,
       loadingLongitude: +data.from.lng,
       platform: data.platform ?? Platform.MOBILE,
+      publicAsCgl: data?.publicAsCgl ?? false,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -395,6 +409,7 @@ export default class JobService {
       productName: data?.productName,
       totalWeight: data?.weight,
       tipper: data?.tipper,
+      publicAsCgl: data?.publicAsCgl,
       priceType: data?.priceType,
       validUntil: data?.expiredTime ? new Date(date.parse(data.expiredTime, this.dateFormatWithMs)) : undefined,
       handlingInstruction: data.note,
@@ -550,7 +565,8 @@ export default class JobService {
         // quotations: job?.quotations ?? [],
         price: Math.round(job.price * 100) / 100,
         priceType: job.priceType,
-        tipper: job.tipper
+        tipper: job.tipper,
+        publicAsCgl: job.publicAsCgl,
       }
     })
 
@@ -601,6 +617,7 @@ export default class JobService {
       status: job.status,
       price: Math.round(job.offeredTotal * 100) / 100,
       priceType: job.priceType,
+      publicAsCgl: job.publicAsCgl,
       tipper: job.tipper
     }
   }

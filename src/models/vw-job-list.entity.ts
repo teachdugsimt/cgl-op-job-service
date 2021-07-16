@@ -129,6 +129,9 @@ export class VwJobList {
   @ViewColumn({ name: 'is_deleted' })
   isDeleted!: boolean
 
+  @ViewColumn({ name: "public_as_cgl" })
+  publicAsCgl!: boolean;
+
   @ViewColumn({ name: 'owner' })
   owner!: {
     id: number
@@ -213,13 +216,13 @@ export class VwJobList {
       updatedAt: Date
       truckType: string
       stallHeight: string
-      truck_photos: {
+      truckPhotos: {
         back: string
         left: string
       }
       approveStatus: string
       registrationNumber: Array<string>
-      loading_weight: number
+      loadingWeight: number
     }
   }>
 
