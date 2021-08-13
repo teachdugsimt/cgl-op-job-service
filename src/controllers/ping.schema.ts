@@ -5,7 +5,7 @@ const pingSchema: FastifySchema = {
     200: {
       type: 'object',
       properties: {
-        message: { type: 'string' },
+        message: { type: 'string' }
       },
       additionalProperties: false
     }

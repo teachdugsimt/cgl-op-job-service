@@ -4,7 +4,7 @@ import PingService from '../services/ping.service';
 import pingSchema from './ping.schema';
 
 
-@Controller({ route: '/ping' })
+@Controller({ route: '/api/v1/jobs/ping' })
 export default class PingController {
 
   private pingService = getInstanceByToken<PingService>(PingService);
@@ -16,7 +16,9 @@ export default class PingController {
     }
   })
   async pingHandler(req: FastifyRequest, reply: FastifyReply): Promise<object> {
-    return { message: this.pingService?.ping() }
+    return {
+      message: this.pingService?.ping()
+    }
   }
 
 }

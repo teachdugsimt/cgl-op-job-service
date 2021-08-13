@@ -20,7 +20,7 @@ export const filterSchema: FastifySchema = {
       productType: { type: 'string' },
       rowsPerPage: { type: 'number' },
       sortBy: { type: 'string' },
-      status: { type: 'number' },
+      status: { type: 'string' },
       to: { type: 'string' },
       truckAmountMax: { type: 'number' },
       truckAmountMin: { type: 'number' },
@@ -66,6 +66,8 @@ export const getJobDetailSchema: FastifySchema = {
         productName: { type: 'string' },
         truckType: { type: 'string' },
         weight: { type: 'number' },
+        requiredTruckAmount: { type: 'number' },
+        publicAsCgl: { type: 'boolean' },
         from: {
           type: 'object',
           properties: {
@@ -96,6 +98,7 @@ export const getJobDetailSchema: FastifySchema = {
           properties: {
             id: { type: 'number' },
             fullName: { type: 'string' },
+            companyName: { type: 'string' },
             email: { type: 'string' },
             mobileNo: { type: 'string' },
             avatar: {
@@ -107,7 +110,7 @@ export const getJobDetailSchema: FastifySchema = {
             userId: { type: 'string' }
           }
         },
-        status: { type: 'number' },
+        status: { type: 'string' },
         price: { type: 'number' },
         priceType: { type: 'string' },
         tipper: { type: 'boolean' },
@@ -146,6 +149,7 @@ export const createJobSchema: FastifySchema = {
       priceType: { type: 'string' },
       expiredTime: { type: 'string' },
       note: { type: 'string' },
+      publicAsCgl: { type: 'boolean' },
       from: {
         type: 'object',
         properties: {
@@ -210,6 +214,7 @@ export const updateJobSchema: FastifySchema = {
       priceType: { type: 'string' },
       expiredTime: { type: 'string' },
       note: { type: 'string' },
+      publicAsCgl: { type: 'boolean' },
       from: {
         type: 'object',
         properties: {
@@ -410,6 +415,42 @@ export const getMasterJobSchema: FastifySchema = {
         priceType: { type: 'string' },
         expiredTime: { type: 'string' },
         note: { type: 'string' },
+      },
+      additionalProperties: true
+    }
+  }
+}
+
+export const getJobSomeoneElseSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+  },
+  querystring: {
+    type: 'object',
+    properties: {
+      userId: { type: 'string' },
+      descending: { type: 'boolean' },
+      page: { type: 'number' },
+      rowsPerPage: { type: 'number' },
+      status: {
+        type: 'string',
+        enum: ['NEW', 'INPROGRESS', 'DONE']
+      },
+    }
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: { type: 'array' },
+        size: { type: 'number' },
+        currentPage: { type: 'number' },
+        totalPages: { type: 'number' },
+        totalElements: { type: 'number' },
+        numberOfElements: { type: 'number' },
       },
       additionalProperties: true
     }

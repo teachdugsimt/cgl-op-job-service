@@ -19,7 +19,7 @@ interface JobFindEntity {
   productType?: string
   rowsPerPage?: number
   sortBy?: string
-  status?: number
+  status?: number | string
   to?: string
   truckAmountMax?: number
   truckAmountMin?: number
@@ -41,6 +41,7 @@ interface AddJobEntity {
   priceType: string
   expiredTime: string
   note?: string
+  publicAsCgl?: boolean,
   from: {
     name: string
     dateTime: string
@@ -76,7 +77,7 @@ interface OptionalFinishJobProps {
   isAdmin?: boolean
 }
 
-type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'status' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted' | 'textSearch'>
+type FindMyJobEntity = Omit<JobFindEntity, 'from' | 'maxWeight' | 'minWeight' | 'owner' | 'productName' | 'productType' | 'to' | 'truckAmountMax' | 'truckAmountMin' | 'truckType' | 'type' | 'weight' | 'isDeleted' | 'textSearch'>
 
 enum JobStatus {
   NEW = 'NEW'
@@ -204,7 +205,7 @@ export default class JobService {
         productName: job.productName,
         truckType: job.truckType,
         weight: Math.round(job.weight * 100) / 100,
-        requiredTruckAmount: job.truckAmount,
+        requiredTruckAmount: job.requiredTruckAmount,
         from: {
           name: job.loadingAddress,
           dateTime: job.loadingDatetime && date.isValid(job.loadingDatetime) ? date.format(new Date(job.loadingDatetime), this.dateFormat) : null,
@@ -219,13 +220,15 @@ export default class JobService {
         })),
         owner: {
           ...job.owner,
-          userId: utility.encodeUserId(job.owner.id)
+          userId: utility.encodeUserId(job.owner.id),
+          companyName: job.owner.fullName
         },
         status: job.status,
         // quotations: [],
         price: Math.round(job.price * 100) / 100,
         priceType: job.priceType,
-        tipper: job.tipper
+        tipper: job.tipper,
+        publicAsCgl: job.publicAsCgl,
       }
     })
 
@@ -239,13 +242,63 @@ export default class JobService {
     const id = utility.decodeUserId(jobId);
     const job = await viewJobRepositry.findById(id);
 
+    if (job.quotations?.length) {
+      job.quotations = job.quotations.map((quotation: any) => {
+        return {
+          ...quotation,
+          id: utility.encodeUserId(quotation.id),
+          truck: {
+            // ...quotation.truck,
+            id: utility.encodeUserId(quotation.truck.id),
+            owner: {
+              ...(quotation?.truck?.owner?.id ? {
+                ...quotation.truck.owner,
+                userId: utility.encodeUserId(quotation.truck.owner.id),
+                companyName: quotation.truck.owner.fullName
+              } : {})
+            },
+            tipper: quotation.truck?.tipper,
+            workingZones: quotation.truck?.work_zone,
+            createdAt: quotation.truck?.created_at && date.format(new Date(quotation.truck?.created_at), this.dateFormat),
+            updatedAt: quotation.truck?.updated_at && date.format(new Date(quotation.truck?.updated_at), this.dateFormat),
+            truckType: quotation.truck?.truck_type,
+            stallHeight: quotation.truck?.stall_height,
+            truckPhotos: quotation.truck?.truck_photos,
+            approveStatus: quotation.truck?.approve_status,
+            loadingWeight: quotation.truck?.loading_weight,
+            registrationNumber: quotation.truck?.registration_number,
+            phoneNumber: quotation.truck?.owner?.mobileNo ?? null
+          },
+          bookingDatetime: date.format(new Date(job.loadingDatetime), this.dateFormat)
+        }
+      });
+    }
+
+    if (job.trips?.length) {
+      job.trips = job.trips.map((trip: any) => {
+        return {
+          ...trip,
+          id: utility.encodeUserId(trip.id),
+          bookingId: utility.encodeUserId(trip.bookingId),
+          truckId: utility.encodeUserId(trip.truckId),
+          owner: {
+            ...(trip?.owner?.id ? {
+              ...trip.owner,
+              userId: utility.encodeUserId(trip.owner.id),
+              companyName: trip.owner.fullName
+            } : {})
+          }
+        }
+      })
+    }
+
     return {
       id: utility.encodeUserId(job.id),
       productTypeId: job.productTypeId,
       productName: job.productName,
       truckType: job.truckType,
       weight: Math.round(job.weight * 100) / 100,
-      requiredTruckAmount: job.truckAmount,
+      requiredTruckAmount: job.requiredTruckAmount,
       from: {
         name: job.loadingAddress,
         dateTime: date.format(new Date(job.loadingDatetime), this.dateFormat),
@@ -260,12 +313,14 @@ export default class JobService {
       })),
       owner: {
         ...job.owner,
-        userId: utility.encodeUserId(job.owner.id)
+        userId: utility.encodeUserId(job.owner.id),
+        companyName: job.owner.fullName
       },
       status: job.status,
       price: Math.round(job.price * 100) / 100,
       priceType: job.priceType,
       tipper: job.tipper,
+      publicAsCgl: job.publicAsCgl,
       trips: job?.trips ?? [],
       quotations: job?.quotations ?? [],
     }
@@ -300,6 +355,7 @@ export default class JobService {
       loadingLatitude: +data.from.lat,
       loadingLongitude: +data.from.lng,
       platform: data.platform ?? Platform.MOBILE,
+      publicAsCgl: data?.publicAsCgl ?? false,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -354,6 +410,7 @@ export default class JobService {
       productName: data?.productName,
       totalWeight: data?.weight,
       tipper: data?.tipper,
+      publicAsCgl: data?.publicAsCgl,
       priceType: data?.priceType,
       validUntil: data?.expiredTime ? new Date(date.parse(data.expiredTime, this.dateFormatWithMs)) : undefined,
       handlingInstruction: data.note,
@@ -442,12 +499,13 @@ export default class JobService {
     return true;
   }
 
-  async getMyJob(userId: string, filter: FindMyJobEntity): Promise<any> {
+  async getJobWithUserId(userId: string, filter: FindMyJobEntity): Promise<any> {
     let {
-      descending,
-      page,
-      rowsPerPage,
+      descending = true,
+      page = 1,
+      rowsPerPage = 10,
       sortBy = 'id',
+      status
     } = filter
 
     const decodeUserId = utility.decodeUserId(userId);
@@ -466,7 +524,10 @@ export default class JobService {
     }
 
     const options: FindManyOptions = {
-      where: { userId: decodeUserId },
+      where: {
+        userId: decodeUserId,
+        ...(status ? { status } : undefined)
+      },
       take: numbOfLimit,
       skip: numbOfPage,
       order: {
@@ -498,13 +559,15 @@ export default class JobService {
         })),
         owner: {
           ...job.owner,
-          userId: utility.encodeUserId(job.owner.id)
+          userId: utility.encodeUserId(job.owner.id),
+          companyName: job.owner.fullName
         },
         status: job.status,
-        quotations: [],
+        // quotations: job?.quotations ?? [],
         price: Math.round(job.price * 100) / 100,
         priceType: job.priceType,
-        tipper: job.tipper
+        tipper: job.tipper,
+        publicAsCgl: job.publicAsCgl,
       }
     })
 
@@ -555,6 +618,7 @@ export default class JobService {
       status: job.status,
       price: Math.round(job.offeredTotal * 100) / 100,
       priceType: job.priceType,
+      publicAsCgl: job.publicAsCgl,
       tipper: job.tipper
     }
   }
