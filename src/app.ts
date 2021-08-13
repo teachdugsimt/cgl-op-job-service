@@ -2,6 +2,7 @@ import fastify from 'fastify'
 import fastifyBlipp from "fastify-blipp";
 import { bootstrap } from 'fastify-decorators';
 
+
 import { resolve } from 'path';
 
 import configApp from './config/app'

@@ -16,7 +16,9 @@ export default class PingController {
     }
   })
   async pingHandler(req: FastifyRequest, reply: FastifyReply): Promise<object> {
-    return { message: this.pingService?.ping() }
+    return {
+      message: this.pingService?.ping()
+    }
   }
 
 }
