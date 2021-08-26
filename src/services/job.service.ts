@@ -1,3 +1,4 @@
+require('dotenv').config()
 import { Service, Initializer, Destructor } from 'fastify-decorators';
 import { Between, FindManyOptions, ILike, In } from 'typeorm';
 import JobRepository from "../repositories/job.repository";
@@ -7,6 +8,8 @@ import date from 'date-and-time';
 import Utility from 'utility-layer/dist/security';
 import Token from 'utility-layer/dist/token';
 import lodash from 'lodash';
+import { URL } from 'url'
+import fetch from 'node-fetch'
 
 interface JobFindEntity {
   descending?: boolean
@@ -621,6 +624,33 @@ export default class JobService {
       publicAsCgl: job.publicAsCgl,
       tipper: job.tipper
     }
+  }
+
+  async sendNotify(userId: string, jobId: string, productName: string,
+    pickupPoint: string, deliveryPoint: string): Promise<any> {
+
+    const messaging_host = process.env.API_HOST || 'https://dev.api.cargolink.co.th'
+    const url = new URL('api/v1/messaging/notification/new-job', messaging_host)
+
+
+    const result = await fetch(url.href, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        userId: userId,
+        jobData: {
+          jobId: jobId,
+          productType: "",
+          productName: productName,
+          pickupPoint: pickupPoint,
+          deliveryPoint: deliveryPoint
+        }
+      })
+    })
+
+    return result
   }
 
   @Destructor()

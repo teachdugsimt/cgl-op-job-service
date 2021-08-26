@@ -1,0 +1,34 @@
+POST http://localhost:3001/api/v1/jobs
+Content-Type: application/json
+Authorization: eyJraWQiOiJKRGJId2JWdlRFZ3M5dVJ4RVY2Y0NBM2dkTW1nU0xKOERhNGxUZmpBaXA4PSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI2NjdhNWJjNi01ZDljLTQ1OTgtYTI5Ni03YzI0YmU4OTliYjUiLCJyb2xlcyI6IlJPTEVfQURNSU58Uk9MRV9EUklWRVIiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuYXAtc291dGhlYXN0LTEuYW1hem9uYXdzLmNvbVwvYXAtc291dGhlYXN0LTFfaElXQlNZejd6IiwiY29nbml0bzp1c2VybmFtZSI6IjY2N2E1YmM2LTVkOWMtNDU5OC1hMjk2LTdjMjRiZTg5OWJiNSIsImN1c3RvbTp1c2VySWQiOiI5S1A5UTNaUiIsIm9yaWdpbl9qdGkiOiIxM2Y1YjAyOS04NzY0LTRjYTgtYjFmOS00MWFhZjQ1Mjg5ZTAiLCJhdWQiOiI0cWtkMTR1Nm5hMGZvMXRmaHRyZGFyaTQxaSIsImV2ZW50X2lkIjoiYWU2ZGM0YjItOGM0Mi00OTc3LWE0NDMtZTBjMjE2NGM3N2IwIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE2Mjk5NTY4NjEsImV4cCI6MTYyOTk2MDQ2MSwiaWF0IjoxNjI5OTU2ODYxLCJqdGkiOiJjNTJmNWFkZi0zZGM3LTQ3NjgtODY1Mi0zMmVmOWNiMDlmYTcifQ.jY-oyontwrhmdHR18ZYQuRgjKUJ_rD6IMFXLjmW0WCFrPAGpGISzFv8wWBOuveC88LiiwDgn7ohi8f3ktzQENTfgPY_HSORWD59aB-M7E2_OfQ8VvOlIMTIWnkJwdRIW_oxddkkS90z0uOX2iz8wiVeHgG_MT9xgO-acWpZsqyviOFi6pYNNUxVaqTY4epjK3cPS_ykXd1bJQiES_UGbt_Z0MHqv0RpTL5A7jXR34V8-kZ_I7iicFUMRJ5v1rKhE8Y70vA6Qv87Lo3yzZ_kQSa8LNv9fzdFPSzeDMRxZoOFUcNy0bzFEPbUebr7Y5qGROG33MeyV69KPiWcSLw1pUQ
+
+{
+    "truckType": "2",
+    "truckAmount": 2,
+    "productTypeId": "3",
+    "productName": "Iphone art 11",
+    "weight": 2,
+    "price": 500,
+    "priceType": "PER_TRIP",
+    "expiredTime": "09-08-2021 14:49:18",
+    "platform": 0,
+    "userId": "9KP9Q3ZR",
+    "from": {
+        "name": "เพชเกษม, ตำบลศรีภูมิ อำเภอเมืองเชียงใหม่ เชียงใหม่ 50200 ประเทศไทย",
+        "dateTime": "10-08-2021 14:49:18",
+        "contactName": "Art",
+        "contactMobileNo": "0987775555",
+        "lat": "18.792856915988015",
+        "lng": "98.98137621581554"
+    },
+    "to": [
+        {
+            "name": "บัวหลวง, ตำบลศรีภูมิ อำเภอเมืองเชียงใหม่ เชียงใหม่ 50200 ประเทศไทย",
+            "dateTime": "11-09-2021 13:49:18",
+            "contactName": "Tum",
+            "contactMobileNo": "0978885555",
+            "lat": "18.793499981203333",
+            "lng": "98.98355584591627"
+        }
+    ]
+}

@@ -4,9 +4,11 @@ import JobService from '../services/job.service';
 import FavoriteService from '../services/favorite.service';
 import { addFavoriteJobSchema, createJobSchema, deleteJobSchema, filterSchema, finishJobSchema, getFavoriteJobSchema, getJobDetailSchema, getJobSomeoneElseSchema, getMasterJobSchema, myJobSchema, updateJobSchema } from './job.schema';
 import Security from 'utility-layer/dist/security';
+import Address from 'utility-layer/dist/helper/address';
 import TokenValidate from 'utility-layer/dist/token';
 
 const security = new Security();
+const address = new Address();
 const tokenValidate = new TokenValidate();
 
 @Controller({ route: '/api/v1/jobs' })
@@ -64,11 +66,25 @@ export default class JobController {
   async add(req: FastifyRequest<{ Headers: { authorization: string }, Body: any }>, reply: FastifyReply): Promise<object> {
     try {
       const userIdFromToken = security.getUserIdByToken(req.headers.authorization);
-      return await this.jobService.addJob(req.body, userIdFromToken);
+      const result = await this.jobService.addJob(req.body, userIdFromToken);
+
+
+      const jobId = security.encodeUserId(result.id)
+      const userId = req.body.userId
+      const productName = result.productName
+      const pickupPoint = address.findProvince(req.body.from.name)
+      const deliveryPoint = address.findProvince(req.body.to[0].name)
+
+      const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
+      console.log("MESSAGE RESULT", msg_result)
+
+      return result
     } catch (err) {
       console.log('err :>> ', err);
       throw err;
     }
+
+
   }
 
   @PATCH({
