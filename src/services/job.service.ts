@@ -202,6 +202,7 @@ export default class JobService {
     }
 
     const jobMapping = jobs[0]?.map((job: any) => {
+      // console.log('JOB', job)
       return {
         id: utility.encodeUserId(job.id),
         productTypeId: job.productTypeId,
@@ -232,8 +233,11 @@ export default class JobService {
         priceType: job.priceType,
         tipper: job.tipper,
         publicAsCgl: job.publicAsCgl,
+        createdAt: job.createdAt
       }
     })
+
+    // console.log('JOB MAPPING', jobMapping)
 
     return {
       data: jobMapping || [],

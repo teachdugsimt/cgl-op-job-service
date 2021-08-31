@@ -25,7 +25,8 @@ import { ViewEntity, ViewColumn, ObjectIdColumn, AfterLoad } from "typeorm";
 	JSON_AGG(JSON_BUILD_OBJECT('name', s.address_dest, 'dateTime', s.delivery_datetime, 'contactName', s.fullname_dest, 'contactMobileNo', s.phone_dest, 'lat', s.latitude_dest::VARCHAR, 'lng', s.longitude_dest::VARCHAR)) AS shipments,
 	j.full_text_search AS full_text_search,
 	vwtrip.trips AS trips,
-	(CASE WHEN vwbook.id IS NOT NULL THEN (JSON_AGG(JSON_BUILD_OBJECT('fullname', vwbook.fullname, 'avatar', vwbook.avatar, 'truck', vwbook.truck, 'booking_datetime', vwbook.booking_datetime))) ELSE NULL END) AS quotations
+	(CASE WHEN vwbook.id IS NOT NULL THEN (JSON_AGG(JSON_BUILD_OBJECT('fullname', vwbook.fullname, 'avatar', vwbook.avatar, 'truck', vwbook.truck, 'booking_datetime', vwbook.booking_datetime))) ELSE NULL END) AS quotations,
+  j.created_at
 FROM
 	job j
 	LEFT JOIN shipment s ON s.job_id = j.id
@@ -70,7 +71,8 @@ GROUP BY j.id,
 	usr.phone_number,
 	usr.avatar,
 	vwtrip.trips,
-	vwbook.id;
+	vwbook.id,
+  j.created_at;
   `
 })
 export class VwJobList {
@@ -225,6 +227,9 @@ export class VwJobList {
       loadingWeight: number
     }
   }>
+
+  @ViewColumn({ name: 'created_at' })
+  createdAt: 'datetime'
 
   @AfterLoad()
   removeUserId() {

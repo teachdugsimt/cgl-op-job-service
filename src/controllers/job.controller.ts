@@ -28,6 +28,7 @@ export default class JobController {
       const { rowsPerPage = 10, page = 1 } = req.query
       const isAdmin = req.headers?.authorization ? tokenValidate.isAdmin(req.headers.authorization) : false
       const jobs = await this.jobService.getAllJob({ ...req.query, isDeleted: isAdmin });
+      // console.log('JOBBBB', jobs)
       return {
         data: jobs.data,
         size: rowsPerPage,
