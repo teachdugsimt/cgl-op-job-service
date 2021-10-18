@@ -456,3 +456,38 @@ export const getJobSomeoneElseSchema: FastifySchema = {
     }
   }
 }
+
+
+export const serachSchema: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+  },
+  querystring: {
+    type: 'object',
+    properties: {
+      descending: { type: 'boolean' },
+      page: { type: 'number' },
+      rowsPerPage: { type: 'number' },
+      sortBy: { type: 'string' },
+      searchText: { type: 'string' },
+    },
+    additionalProperties: true
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        data: { type: 'array' },
+        size: { type: 'number' },
+        currentPage: { type: 'number' },
+        totalPages: { type: 'number' },
+        totalElements: { type: 'number' },
+        numberOfElements: { type: 'number' },
+      },
+      additionalProperties: false
+    }
+  }
+}

@@ -2,7 +2,11 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { Controller, DELETE, GET, getInstanceByToken, PATCH, POST } from 'fastify-decorators';
 import JobService from '../services/job.service';
 import FavoriteService from '../services/favorite.service';
-import { addFavoriteJobSchema, createJobSchema, deleteJobSchema, filterSchema, finishJobSchema, getFavoriteJobSchema, getJobDetailSchema, getJobSomeoneElseSchema, getMasterJobSchema, myJobSchema, updateJobSchema } from './job.schema';
+import {
+  addFavoriteJobSchema, createJobSchema, deleteJobSchema,
+  filterSchema, finishJobSchema, getFavoriteJobSchema, getJobDetailSchema, getJobSomeoneElseSchema,
+  getMasterJobSchema, myJobSchema, updateJobSchema, serachSchema
+} from './job.schema';
 import Security from 'utility-layer/dist/security';
 import Address from 'utility-layer/dist/helper/address';
 import TokenValidate from 'utility-layer/dist/token';
@@ -284,5 +288,24 @@ export default class JobController {
       throw err;
     }
   }
+
+
+  @GET({
+    url: '/search',
+    options: {
+      schema: serachSchema
+    }
+  })
+  async searchJob(req: FastifyRequest<{ Headers: { authorization?: string }, Querystring: any }>, reply: FastifyReply): Promise<object> {
+    try {
+      const isAdmin = req.headers?.authorization ? tokenValidate.isAdmin(req.headers.authorization) : false
+      const jobs = await this.jobService.findJobListV2({ ...req.query, isDeleted: isAdmin });
+      return jobs
+    } catch (err) {
+      console.log('err :>> ', err);
+      throw err;
+    }
+  }
+
 
 }

@@ -1,9 +1,11 @@
 require('dotenv').config()
 import { Service, Initializer, Destructor } from 'fastify-decorators';
-import { Between, FindManyOptions, ILike, In } from 'typeorm';
+import { Between, FindManyOptions, ILike, Like, In, MoreThan } from 'typeorm';
 import JobRepository from "../repositories/job.repository";
 import VwJobListRepository from '../repositories/vw-job-list.repository';
+import JobListV2Repository from '../repositories/vw-job-list-v2.repository'
 import ShipmentRepository from '../repositories/shipment.repository';
+import * as Types from './job.type'
 import date from 'date-and-time';
 import Utility from 'utility-layer/dist/security';
 import Token from 'utility-layer/dist/token';
@@ -93,6 +95,7 @@ enum Platform {
 
 const jobRepository = new JobRepository();
 const viewJobRepositry = new VwJobListRepository();
+const viewJobV2Repository = new JobListV2Repository();
 const shipmentRepository = new ShipmentRepository();
 const utility = new Utility();
 const token = new Token();
@@ -186,7 +189,15 @@ export default class JobService {
         ...filterTruckAmount,
         ...(truckType?.length ? { truckType: JSON.parse(truckType) } : undefined),
         ...(status ? { status } : undefined),
-        isDeleted: isDeleted // Remove this attribute when user is admin
+        isDeleted: isDeleted, // Remove this attribute when user is admin
+        shipments: In([{
+          "name": "Bangkok Hospital, ซอย เพชรบุรี 47 แยก 10 แขวง บางกะปิ เขตห้วยขวาง กรุงเทพมหานคร ประเทศไทย",
+          "dateTime": "30-09-2021 13:14",
+          "contactName": "Tuu",
+          "contactMobileNo": "0989998888",
+          "lat": "13.7487515",
+          "lng": "100.5832257"
+        }])
       }
 
       const options: FindManyOptions = {
@@ -628,6 +639,90 @@ export default class JobService {
       publicAsCgl: job.publicAsCgl,
       tipper: job.tipper
     }
+  }
+
+  async processLoadingPoint(list: Types.SearchResult[]) {
+    if (!list || !Array.isArray(list)) return []
+
+    const tmpList: Types.SearchResult[] = JSON.parse(JSON.stringify(list))
+    tmpList.map((e: Types.SearchResult, i: number) => {
+      let slot: any = e
+      slot.from = {
+        name: e.loadingAddress,
+        dateTime: e.loadingDatetime,
+        contactName: e.loadingContactName,
+        contactMobileNo: e.loadingContactPhone,
+        lat: e.loadingLatitude,
+        lng: e.loadingLongitude,
+      }
+      slot.to = e.shipments
+
+      delete slot.shipments
+      delete slot.loadingAddress
+      delete slot.loadingDatetime
+      delete slot.loadingContactName
+      delete slot.loadingContactPhone
+      delete slot.loadingLatitude
+      delete slot.loadingLongitude
+    })
+    return tmpList
+  }
+
+  async findJobListV2(query: Types.JobListFilter) {
+    console.log("Query service :: ", JSON.stringify(query))
+    let { rowsPerPage = 10, page = 1, descending = true, sortBy = 'id', searchText, where } = query;
+
+    let realPage: number;
+    let realTake: number;
+    if (rowsPerPage) realTake = +rowsPerPage;
+    else {
+      rowsPerPage = 10;
+      realTake = 10;
+    }
+    if (page) realPage = +page === 1 ? 0 : (+page - 1) * realTake;
+    else {
+      realPage = 0;
+      page = 1;
+    }
+
+    let response: any
+
+    if (searchText) {
+      const options = {
+        fullTextSearch: `${searchText}:*`,
+        page: realPage,
+        rowsPerPage: realTake,
+        ...(sortBy ? { sortBy: camelToSnakeCase(sortBy) } : undefined),
+        ...(descending ? { descending: descending ? 'DESC' : 'ASC' } : undefined),
+      }
+      response = await viewJobV2Repository.fullTextSearch(options);
+    } else {
+      const filter: any = where && typeof where == 'string' ? JSON.parse(where) : (where ?? {})
+      if (filter?.id) filter.id = utility.decodeUserId(filter.id)
+      if (filter?.loadingDatetime) filter.loadingDatetime = MoreThan(filter.loadingDatetime)
+      const findOptions: FindManyOptions = {
+        take: realTake,
+        skip: realPage,
+        where: filter,
+        order: {
+          [camelToSnakeCase(sortBy)]: descending ? 'DESC' : 'ASC'
+        },
+      };
+      response = await viewJobV2Repository.findAndCount(findOptions)
+    }
+
+    const parseResponse: any = await this.processLoadingPoint(response[0])
+    console.log("Parseresponse :: ", parseResponse)
+    const response_final = {
+      data: parseResponse || [],
+      totalElements: response[1] || 0,
+      size: rowsPerPage,
+      numberOfElements: response[0].length ?? 0,
+      currentPage: page,
+      totalPages: Math.ceil((response[1] || 0) / (+rowsPerPage))
+    }
+    console.log("Response get job list :: ", response_final)
+    return response_final
   }
 
   async sendNotify(userId: string, jobId: string, productName: string,
