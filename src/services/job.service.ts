@@ -35,6 +35,11 @@ interface JobFindEntity {
   textSearch?: string
 }
 
+interface family {
+  parent: string | null
+  child: string[] | null
+}
+
 interface AddJobEntity {
   truckType: string
   truckAmount: number
@@ -65,6 +70,10 @@ interface AddJobEntity {
   }[],
   platform?: number
   userId?: string
+  family?: {
+    parent: string | null
+    child: string[] | null
+  }
 }
 
 interface ShipmentDestination {
@@ -344,6 +353,22 @@ export default class JobService {
     }
   }
 
+  processFammily(fam: family | null) {
+    if (!fam) return null
+
+    const tmpFamily: any = JSON.parse(JSON.stringify(fam))
+    if (tmpFamily?.parent) {
+      tmpFamily['parent'] = utility.decodeUserId(tmpFamily['parent'])
+    }
+    if (tmpFamily?.child && Array.isArray(tmpFamily.child)) {
+      tmpFamily.child = fam.child?.map((e: any) => {
+        return utility.decodeUserId(e)
+      })
+    }
+    console.log("Data family :: ", tmpFamily)
+    return tmpFamily
+  }
+
   async addJob(data: AddJobEntity, userId: string): Promise<any> {
     const decodeUserId = utility.decodeUserId(userId);
     const userIdFromMember = data?.userId ? utility.decodeUserId(data.userId) : null;
@@ -374,12 +399,14 @@ export default class JobService {
       loadingLongitude: +data.from.lng,
       platform: data.platform ?? Platform.MOBILE,
       publicAsCgl: data?.publicAsCgl ?? false,
+      family: data?.family ? this.processFammily(data.family) : null,
       createdAt: new Date(),
       updatedAt: new Date()
     }
 
     const jobResult = await jobRepository.add(jobParams);
 
+    console.log("jobResult :: ", jobResult)
     const shipmentParams = data.to.map((shipment: any) => {
       destinationData += `${shipment.name} ${shipment.contactName} ${shipment.contactMobileNo} `;
       return {

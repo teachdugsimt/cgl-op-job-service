@@ -20,6 +20,7 @@ export interface JobCreateEntity {
   loadingLatitude: number
   loadingLongitude: number
   platform?: number
+  family?: any
 }
 export interface JobUpdateEntity {
   offeredTotal?: string // number

@@ -369,6 +369,12 @@ export class Job {
   @Column("boolean", { name: "public_as_cgl", nullable: false, default: () => "false" })
   publicAsCgl: boolean;
 
+  @Column({ name: 'family', nullable: true, type: 'jsonb' })
+  family: {
+    child: number[] | null
+    parent: number
+  } | null
+
   @AfterLoad()
   getUserId() {
     this.id = util.encodeUserId(+this.id);

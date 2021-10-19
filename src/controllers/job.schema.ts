@@ -176,8 +176,15 @@ export const createJobSchema: FastifySchema = {
         }
       },
       platform: { type: 'number' },
-      userId: { type: 'string' }
+      userId: { type: 'string' },
+      family: {
+        type: 'object', properties: {
+          parent: { type: 'string', nullable: true },
+          child: { type: 'array', items: { type: 'string' }, nullable: true }
+        }
+      }
     },
+    additionalProperties: true,
     require: ['truckType', 'productTypeId', 'productName', 'price', 'tipper', 'priceType', 'expiredTime', 'from', 'to']
   },
   response: {
