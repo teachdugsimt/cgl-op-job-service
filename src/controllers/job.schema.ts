@@ -181,7 +181,7 @@ export const createJobSchema: FastifySchema = {
         type: 'object', properties: {
           parent: { type: 'string', nullable: true },
           child: { type: 'array', items: { type: 'string' }, nullable: true }
-        }
+        }, nullable: true
       }
     },
     additionalProperties: true,

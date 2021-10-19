@@ -405,6 +405,16 @@ export default class JobService {
     }
 
     const jobResult = await jobRepository.add(jobParams);
+    if (data?.family && data.family?.parent) {
+      const decodeParentId = utility.decodeUserId(data.family.parent)
+      const getParent = await jobRepository.findById(decodeParentId);
+      getParent.family = {
+        parent: null, child: getParent?.family?.child ? [...getParent.family.child, +jobResult.id] : [+jobResult.id]
+      }
+      getParent.id = utility.decodeUserId(getParent.id)
+      console.log("Get parent data :: ", getParent)
+      await jobRepository.update(getParent.id, getParent)
+    }
 
     console.log("jobResult :: ", jobResult)
     const shipmentParams = data.to.map((shipment: any) => {
