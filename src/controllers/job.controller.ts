@@ -5,12 +5,16 @@ import FavoriteService from '../services/favorite.service';
 import {
   addFavoriteJobSchema, createJobSchema, deleteJobSchema,
   filterSchema, finishJobSchema, getFavoriteJobSchema, getJobDetailSchema, getJobSomeoneElseSchema,
-  getMasterJobSchema, myJobSchema, updateJobSchema, serachSchema
+  getMasterJobSchema, myJobSchema, updateJobSchema, serachSchema, pushJobNotify
 } from './job.schema';
 import Security from 'utility-layer/dist/security';
 import Address from 'utility-layer/dist/helper/address';
 import TokenValidate from 'utility-layer/dist/token';
+import JobRepository from "../repositories/job.repository";
+import ShipmentRepository from '../repositories/shipment.repository';
 
+const jobRepository = new JobRepository();
+const shipmentsRepository = new ShipmentRepository();
 const security = new Security();
 const address = new Address();
 const tokenValidate = new TokenValidate();
@@ -63,6 +67,37 @@ export default class JobController {
   }
 
   @POST({
+    url: '/notification/:jobId',
+    options: {
+      schema: pushJobNotify
+    }
+  })
+  async pushNoti(req: FastifyRequest<{ Headers: { authorization: string }, Params: { jobId: string } }>, reply: FastifyReply): Promise<boolean> {
+    try {
+      const decodeJobId = security.decodeUserId(req.params.jobId);
+      const findJob = await jobRepository.findById(decodeJobId);
+      console.log(`🚀  ->  findJob`, findJob);
+      const findShipments = await shipmentsRepository.find({ where: { jobId: security.decodeUserId(findJob.id) } })
+      console.log(`🚀  ->  findShipments`, findShipments);
+
+      const jobId = security.encodeUserId(findJob.id)
+      const userId = security.encodeUserId(findJob.userId)
+      const productName = findJob.productName
+      const pickupPoint = address.findProvince(findJob.loadingAddress)
+      const deliveryPoint = address.findProvince(findShipments[0].addressDest)
+
+      const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
+      console.log("MESSAGE RESULT :: ", msg_result)
+      if (msg_result)
+        return true;
+      else return false;
+    } catch (err) {
+      console.log('err :>> ', err);
+      throw err;
+    }
+  }
+
+  @POST({
     url: '/',
     options: {
       schema: createJobSchema
@@ -72,7 +107,6 @@ export default class JobController {
     try {
       const userIdFromToken = security.getUserIdByToken(req.headers.authorization);
       const result = await this.jobService.addJob(req.body, userIdFromToken);
-
 
       const jobId = security.encodeUserId(result.id)
       const userId = req.body.userId

@@ -498,3 +498,21 @@ export const serachSchema: FastifySchema = {
     }
   }
 }
+
+export const pushJobNotify: FastifySchema = {
+  headers: {
+    type: 'object',
+    properties: {
+      authorization: { type: 'string' }
+    },
+  },
+  params: {
+    jobId: { type: 'string' }
+  },
+  response: {
+    200: {
+      type: 'boolean',
+      additionalProperties: false
+    }
+  }
+}
