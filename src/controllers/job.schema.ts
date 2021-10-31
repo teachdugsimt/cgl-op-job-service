@@ -27,7 +27,8 @@ export const filterSchema: FastifySchema = {
       truckType: { type: 'string' },
       type: { type: 'number' },
       weight: { type: 'number' },
-      textSearch: { type: 'string' }
+      textSearch: { type: 'string' },
+      includeExpireJob: { type: 'boolean' },
     }
   },
   response: {
