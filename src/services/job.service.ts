@@ -12,6 +12,7 @@ import Token from 'utility-layer/dist/token';
 import lodash from 'lodash';
 import { URL } from 'url'
 import fetch from 'node-fetch'
+import moment from 'moment-timezone'
 
 interface JobFindEntity {
   descending?: boolean
@@ -33,6 +34,7 @@ interface JobFindEntity {
   weight?: number
   isDeleted?: boolean
   textSearch?: string
+  includeExpireJob?: boolean
 }
 
 interface family {
@@ -149,7 +151,8 @@ export default class JobService {
       type,
       weight,
       isDeleted = false,
-      textSearch
+      textSearch,
+      includeExpireJob = false
     } = filter
 
     let jobs: any
@@ -171,7 +174,12 @@ export default class JobService {
       numbOfPage = 0;
     }
 
+    console.log("includeExpireJob : ", includeExpireJob)
+    console.log("IsDelete :: ", isDeleted)
+    const newDate = moment((new Date())).format("YYYY-MM-DD HH:mm:ss")
     if (textSearch) {
+      console.log("New date :: ", newDate)
+      const filterOptions: string = includeExpireJob == true ? '' : `("VwJobList"."loading_datetime" >= '${newDate}' and "VwJobList"."status" = '${status || 'NEW'}') and `
       const options = {
         fullTextSearch: `${textSearch}:*`,
         page: numbOfPage,
@@ -179,7 +187,7 @@ export default class JobService {
         ...(sortBy ? { sortBy: camelToSnakeCase(sortBy) } : undefined),
         ...(descending ? { descending: descending ? 'DESC' : 'ASC' } : undefined),
       }
-      jobs = await viewJobRepositry.fullTextSearch(options);
+      jobs = await viewJobRepositry.fullTextSearch(options, filterOptions);
     } else {
       if (maxWeight && minWeight) {
         filterTotalWeight.totalWeight = [minWeight, maxWeight];
@@ -206,8 +214,9 @@ export default class JobService {
         ...(productType?.length ? { productTypeId: JSON.parse(productType) } : undefined),
         ...filterTruckAmount,
         ...(truckType?.length ? { truckType: JSON.parse(truckType) } : undefined),
-        ...(status ? { status } : undefined),
-        isDeleted: isDeleted, // Remove this attribute when user is admin
+        ...(status ? { status } : { status: 'NEW' }),
+        ...(includeExpireJob == false ? { loadingDatetime: newDate } : undefined),
+        ...(isDeleted ? undefined : { isDeleted: false }), // Remove this attribute when user is admin
         shipments: In([{
           "name": "Bangkok Hospital, ซอย เพชรบุรี 47 แยก 10 แขวง บางกะปิ เขตห้วยขวาง กรุงเทพมหานคร ประเทศไทย",
           "dateTime": "30-09-2021 13:14",

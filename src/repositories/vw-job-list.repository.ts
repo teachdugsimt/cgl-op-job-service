@@ -35,14 +35,17 @@ export default class VwJobListRepository {
       truckType,
       status,
       truckAmount,
-      isDeleted
+      isDeleted,
+      loadingDatetime
     }: any = filter.where
     const orderBy: any = filter.order
 
     const server: any = this.instance
     const viewJobList: Repository<VwJobList> = server?.db?.vwJobList;
     const vwJobListQueryBuilder = viewJobList.createQueryBuilder();
-    vwJobListQueryBuilder.where('is_deleted = :isDeleted', { isDeleted });
+    vwJobListQueryBuilder.where('id IS NOT NULL');
+    if (isDeleted != undefined || isDeleted != null)
+      vwJobListQueryBuilder.andWhere('is_deleted = :isDeleted', { isDeleted });
     if (address) vwJobListQueryBuilder.andWhere(`to_tsvector('simple', loading_address || shipments) @@ :address::tsquery`, { address: `${address}:*` })
     if (totalWeight) vwJobListQueryBuilder.andWhere('weight BETWEEN :min AND :max', { min: totalWeight[0], max: totalWeight[1] })
     if (productName) vwJobListQueryBuilder.andWhere('product_name = :productName', { productName })
@@ -50,6 +53,7 @@ export default class VwJobListRepository {
     if (truckType) vwJobListQueryBuilder.andWhere('truck_type = ANY (:truckType)', { truckType })
     if (status) vwJobListQueryBuilder.andWhere('status = :status', { status })
     if (truckAmount) vwJobListQueryBuilder.andWhere('required_truck_amount BETWEEN :min AND :max', { min: truckAmount[0], max: truckAmount[1] })
+    if (loadingDatetime) vwJobListQueryBuilder.andWhere('loading_datetime >= :timer', { timer: loadingDatetime })
     return vwJobListQueryBuilder
       .orderBy(orderBy)
       .take(filter.take)
@@ -57,12 +61,12 @@ export default class VwJobListRepository {
       .getManyAndCount();
   }
 
-  async fullTextSearch(data: JobFullTextSearch): Promise<any> {
+  async fullTextSearch(data: JobFullTextSearch, optionsFilter?: string | null): Promise<any> {
     const server: any = this.instance
     const viewJobList: Repository<VwJobList> = server?.db?.vwJobList;
     return viewJobList.createQueryBuilder()
       .select()
-      .where('full_text_search @@ to_tsquery(:query)', {
+      .where(`${optionsFilter || ''} full_text_search @@ to_tsquery(:query)`, {
         query: data.fullTextSearch
       })
       .orderBy({
