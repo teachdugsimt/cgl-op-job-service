@@ -255,7 +255,7 @@ export default class JobController {
       }
       await this.jobService.finishJob(userId, req.params.jobId, options);
       return reply.status(204).send({});
-    } catch (err) {
+    } catch (err: any) {
       console.log('err :>> ', err);
       if (err.message === 'You do not have permission to access') {
         reply.status(401)

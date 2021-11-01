@@ -116,9 +116,18 @@ export default class JobService {
 
   public dateFormat: string = 'DD-MM-YYYY HH:mm'
   public dateFormatWithMs: string = 'DD-MM-YYYY HH:mm:ss'
+  public dateFormatStandard: string = 'YYYY-MM-DD HH:mm:ss'
 
   @Initializer()
   async init(): Promise<void> { }
+
+  private convertFormatDate(dt: string) {
+    if (date.isValid(dt, this.dateFormatStandard)) {
+      return new Date(dt);
+    } else {
+      return new Date(date.parse(dt, this.dateFormatWithMs))
+    }
+  }
 
   async getAllJob(filter: JobFindEntity): Promise<any> {
     let {
@@ -467,10 +476,10 @@ export default class JobService {
       tipper: data?.tipper,
       publicAsCgl: data?.publicAsCgl,
       priceType: data?.priceType,
-      validUntil: data?.expiredTime ? new Date(date.parse(data.expiredTime, this.dateFormatWithMs)) : undefined,
+      validUntil: data?.expiredTime ? this.convertFormatDate(data.expiredTime) : undefined,
       handlingInstruction: data.note,
       loadingAddress: data?.from?.name,
-      loadingDatetime: data?.from?.dateTime ? new Date(date.parse(data.from.dateTime, this.dateFormatWithMs)) : undefined,
+      loadingDatetime: data?.from?.dateTime ? this.convertFormatDate(data.from.dateTime) : undefined,
       loadingContactName: data?.from?.contactName,
       loadingContactPhone: data?.from?.contactMobileNo,
       loadingLatitude: data?.from?.lat ? +data.from.lat : undefined,
@@ -478,10 +487,11 @@ export default class JobService {
     }
 
     const jobRemoveUndefinedParmas = JSON.parse(JSON.stringify(jobParams));
+    console.log('jobRemoveUndefinedParmas :>> ', jobRemoveUndefinedParmas);
     const jobUpdated = await jobRepository.update(decodeJobId, jobRemoveUndefinedParmas);
 
     if (data?.to?.length) {
-
+      console.log('JSON.stringify(data.to) :>> ', JSON.stringify(data.to));
       const shipments: ShipmentDestination[] = await shipmentRepository.find({
         where: { jobId: decodeJobId },
         select: [
@@ -489,13 +499,17 @@ export default class JobService {
         ]
       });
 
+      console.log('JSON.stringify(shipments) :>> ', JSON.stringify(shipments));
+
       const shipmentForDelete = lodash.differenceWith(
         shipments,
         data.to,
-        (a, b) =>
-          lodash.isEqual(a.phoneDest, b.contactMobileNo) &&
+        (a, b) => lodash.isEqual(a.phoneDest, b.contactMobileNo) &&
           lodash.isEqual(a.fullnameDest, b.contactName) &&
-          lodash.isEqual(date.format(new Date(a.deliveryDatetime), this.dateFormatWithMs), b.dateTime) &&
+          lodash.isEqual(
+            date.format(new Date(a.deliveryDatetime), this.dateFormat),
+            date.format(this.convertFormatDate(b.dateTime), this.dateFormat)
+          ) &&
           lodash.isEqual(a.addressDest, b.name) &&
           lodash.isEqual(a.latitudeDest.toString(), b.lat) &&
           lodash.isEqual(a.longitudeDest.toString(), b.lng)
@@ -507,17 +521,14 @@ export default class JobService {
         (a, b) =>
           lodash.isEqual(a.contactMobileNo, b.phoneDest) &&
           lodash.isEqual(a.contactName, b.fullnameDest) &&
-          lodash.isEqual(a.dateTime, date.format(new Date(b.deliveryDatetime), this.dateFormatWithMs)) &&
+          lodash.isEqual(
+            date.format(this.convertFormatDate(a.dateTime), this.dateFormat),
+            date.format(new Date(b.deliveryDatetime), this.dateFormat)
+          ) &&
           lodash.isEqual(a.name, b.addressDest) &&
           lodash.isEqual(a.lat, b.latitudeDest.toString()) &&
           lodash.isEqual(a.lng, b.longitudeDest.toString())
       );
-
-      if (shipmentForDelete.length) {
-        console.log('JSON.stringify(shipmentForDelete) :>> ', JSON.stringify(shipmentForDelete));
-        const shipmentIds = shipmentForDelete.map(({ id }) => id);
-        await shipmentRepository.delete({ id: In(shipmentIds) })
-      }
 
       if (shipmentForAdd.length) {
         console.log('JSON.stringify(shipmentForAdd) :>> ', JSON.stringify(shipmentForAdd));
@@ -525,18 +536,23 @@ export default class JobService {
           jobId: decodeJobId,
           status: JobStatus.NEW,
           addressDest: shipment.name,
-          deliveryDatetime: new Date(date.parse(shipment.dateTime, this.dateFormatWithMs)),
+          deliveryDatetime: this.convertFormatDate(shipment.dateTime),
           fullnameDest: shipment.contactName,
           phoneDest: shipment.contactMobileNo,
           latitudeDest: +shipment.lat,
           longitudeDest: +shipment.lng,
           createdUser: decodeUserId.toString(),
-          updatedUser: decodeUserId.toString(),
+          updatedUser: decodeUserId.toString()
         }))
-
+        console.log('JSON.stringify(shipmentParams) :>> ', JSON.stringify(shipmentParams));
         await shipmentRepository.bulkInsert(shipmentParams);
       }
 
+      if (shipmentForDelete.length) {
+        console.log('JSON.stringify(shipmentForDelete) :>> ', JSON.stringify(shipmentForDelete));
+        const shipmentIds = shipmentForDelete.map(({ id }) => id);
+        await shipmentRepository.delete({ id: In(shipmentIds) })
+      }
     }
 
     return jobUpdated;
