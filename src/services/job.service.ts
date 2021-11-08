@@ -214,17 +214,9 @@ export default class JobService {
         ...(productType?.length ? { productTypeId: JSON.parse(productType) } : undefined),
         ...filterTruckAmount,
         ...(truckType?.length ? { truckType: JSON.parse(truckType) } : undefined),
-        ...(status ? { status } : { status: 'NEW' }),
+        ...(status ? { status } : includeExpireJob == false ? { status: 'NEW' } : undefined),
         ...(includeExpireJob == false ? { loadingDatetime: newDate } : undefined),
         ...(isDeleted ? undefined : { isDeleted: false }), // Remove this attribute when user is admin
-        shipments: In([{
-          "name": "Bangkok Hospital, ซอย เพชรบุรี 47 แยก 10 แขวง บางกะปิ เขตห้วยขวาง กรุงเทพมหานคร ประเทศไทย",
-          "dateTime": "30-09-2021 13:14",
-          "contactName": "Tuu",
-          "contactMobileNo": "0989998888",
-          "lat": "13.7487515",
-          "lng": "100.5832257"
-        }])
       }
 
       const options: FindManyOptions = {
