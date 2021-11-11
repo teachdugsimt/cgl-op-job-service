@@ -806,6 +806,23 @@ export default class JobService {
     return result
   }
 
+  async sendLineNotify(jobId: string): Promise<any> {
+    const messaging_host = process.env.API_HOST || 'https://dev.api.cargolink.co.th'
+    const url = new URL('api/v1/messaging/line/boardcast', messaging_host)
+
+    const result = await fetch(url.href, {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      method: 'POST',
+      body: JSON.stringify({
+        jobId
+      })
+    })
+
+    return result
+  }
+
   @Destructor()
   async destroy(): Promise<void> { }
 }

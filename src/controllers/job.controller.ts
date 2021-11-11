@@ -115,6 +115,7 @@ export default class JobController {
       const deliveryPoint = address.findProvince(req.body.to[0].name)
 
       const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
+      await this.jobService.sendLineNotify(jobId)
       console.log("MESSAGE RESULT", msg_result)
 
       return result
