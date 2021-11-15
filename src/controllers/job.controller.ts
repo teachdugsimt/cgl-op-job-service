@@ -86,6 +86,7 @@ export default class JobController {
       const pickupPoint = address.findProvince(findJob.loadingAddress)
       const deliveryPoint = address.findProvince(findShipments[0].addressDest)
 
+      await this.jobService.sendLineNotify(jobId)
       const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
       console.log("MESSAGE RESULT :: ", msg_result)
       if (msg_result)
