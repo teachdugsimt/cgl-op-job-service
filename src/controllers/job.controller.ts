@@ -80,7 +80,7 @@ export default class JobController {
       const findShipments = await shipmentsRepository.find({ where: { jobId: security.decodeUserId(findJob.id) } })
       console.log(`🚀  ->  findShipments`, findShipments);
 
-      const jobId = security.encodeUserId(findJob.id)
+      const jobId = findJob.id
       const userId = security.encodeUserId(findJob.userId)
       const productName = findJob.productName
       const pickupPoint = address.findProvince(findJob.loadingAddress)
