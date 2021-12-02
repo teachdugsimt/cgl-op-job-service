@@ -99,6 +99,37 @@ export default class JobController {
   }
 
   @POST({
+    url: '/notification-v1/:jobId',
+    options: {
+      schema: pushJobNotify
+    }
+  })
+  async pushNotiOnly(req: FastifyRequest<{ Headers: { authorization: string }, Params: { jobId: string } }>, reply: FastifyReply): Promise<boolean> {
+    try {
+      const decodeJobId = security.decodeUserId(req.params.jobId);
+      const findJob = await jobRepository.findById(decodeJobId);
+      console.log(`🚀  ->  findJob`, findJob);
+      const findShipments = await shipmentsRepository.find({ where: { jobId: security.decodeUserId(findJob.id) } })
+      console.log(`🚀  ->  findShipments`, findShipments);
+
+      const jobId = findJob.id
+      const userId = security.encodeUserId(findJob.userId)
+      const productName = findJob.productName
+      const pickupPoint = address.findProvince(findJob.loadingAddress)
+      const deliveryPoint = address.findProvince(findShipments[0].addressDest)
+
+      const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
+      console.log("MESSAGE RESULT :: ", msg_result)
+      if (msg_result)
+        return true;
+      else return false;
+    } catch (err) {
+      console.log('err :>> ', err);
+      throw err;
+    }
+  }
+
+  @POST({
     url: '/',
     options: {
       schema: createJobSchema
@@ -106,8 +137,11 @@ export default class JobController {
   })
   async add(req: FastifyRequest<{ Headers: { authorization: string }, Body: any }>, reply: FastifyReply): Promise<object> {
     try {
+
+      console.time("Save to database")
       const userIdFromToken = security.getUserIdByToken(req.headers.authorization);
       const result = await this.jobService.addJob(req.body, userIdFromToken);
+      console.timeEnd("Save to database")
 
       const jobId = security.encodeUserId(result.id)
       const userId = req.body.userId
@@ -115,10 +149,12 @@ export default class JobController {
       const pickupPoint = address.findProvince(req.body.from.name)
       const deliveryPoint = address.findProvince(req.body.to[0].name)
 
+
+      console.time("Notification service (line, firebase)")
       const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
       await this.jobService.sendLineNotify(jobId)
       console.log("MESSAGE RESULT", msg_result)
-
+      console.timeEnd("Notification service (line, firebase)")
       return result
     } catch (err) {
       console.log('err :>> ', err);

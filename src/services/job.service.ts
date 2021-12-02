@@ -13,6 +13,7 @@ import lodash from 'lodash';
 import { URL } from 'url'
 import fetch from 'node-fetch'
 import moment from 'moment-timezone'
+import axios from 'axios'
 
 interface JobFindEntity {
   descending?: boolean
@@ -809,16 +810,17 @@ export default class JobService {
   async sendLineNotify(jobId: string): Promise<any> {
     const messaging_host = process.env.API_HOST || 'https://dev.api.cargolink.co.th'
     const url = new URL('api/v1/messaging/line/boardcast', messaging_host)
-
-    const result = await fetch(url.href, {
-      headers: {
-        "Content-Type": "application/json"
-      },
-      method: 'POST',
-      body: JSON.stringify({
-        jobId
-      })
-    })
+    console.log("URL host :: ", url)
+    // const result = await fetch(url.href, {
+    //   headers: {
+    //     "Content-Type": "application/json"
+    //   },
+    //   method: 'POST',
+    //   body: JSON.stringify({
+    //     jobId
+    //   })
+    // })
+    const result = await axios.post(url.href, { jobId })
 
     return result
   }

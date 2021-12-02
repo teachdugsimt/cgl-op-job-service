@@ -23,6 +23,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.170",
     "aws-lambda-fastify": "^1.4.4",
+    "axios": "^0.24.0",
     "claudia-api-builder": "^4.1.2",
     "date-and-time": "^1.0.1",
     "dotenv": "^10.0.0",
