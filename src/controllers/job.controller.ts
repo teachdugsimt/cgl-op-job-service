@@ -152,7 +152,7 @@ export default class JobController {
 
       console.time("Notification service (line, firebase)")
       const msg_result = await this.jobService.sendNotify(userId, jobId, productName, pickupPoint ?? '-ไม่ระบุต้นทาง-', deliveryPoint ?? '-ไม่ระบุปลายทาง-')
-      await this.jobService.sendLineNotify(jobId)
+      // await this.jobService.sendLineNotify(jobId)
       console.log("MESSAGE RESULT", msg_result)
       console.timeEnd("Notification service (line, firebase)")
       return result
